@@ -3,7 +3,8 @@ package com.azamat1554;
 import java.util.Arrays;
 
 /**
- * Created by FamilyAccount on 15.04.2016.
+ * Класс реализующий шифрование и расшифровку с помощью алгоритма
+ * AES (Rijndael)
  */
 public class AESCipher {
     private final int nb = 4; //количество столбцов в массиве state
@@ -48,13 +49,21 @@ public class AESCipher {
             0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
     };
 
+    private enum Mode {
+        Encrypt, Decrypt
+    }
+
+    private Mode mode;
+
     private int[][] state = new int[4][nb]; //матрица над которой будут производиться преобразования
     private Key keyObj; //класс для генерации ключей
 
-    public int[][] encrypt(int[] plainbytes, int[] secretKey) {
+    public int[] encrypt(int[] plainText, int[] secretKey) {
+        mode = Mode.Encrypt; //encryption mode
+
         keyObj = new Key(secretKey);
-        fillState(plainbytes);
         keyObj.keyExpansion();
+        fillState(plainText);
 
         //-------------Инициализация--------------------------
         addRoundKey();
@@ -73,6 +82,33 @@ public class AESCipher {
         addRoundKey();
 
         outputState();
+        return output();
+    }
+
+    public int[][] decrypt(int[] cipherText, int[] secretKey) {
+        mode = Mode.Decrypt; //decryption mode
+
+        keyObj = new Key(secretKey);
+        keyObj.keyExpansion();
+        fillState(cipherText);
+
+        //-------------Инициализация--------------------------
+        addRoundKey();
+
+        //--------------nr-1 раундов--------------------------
+        for (int i = nr - 1; i > 0; i--) {
+            invShiftRows();
+            invSubBytes();
+            invMixColumns();
+            addRoundKey();
+        }
+
+        //-----------------Последний раунд---------------------
+        invShiftRows();
+        invSubBytes();
+        addRoundKey();
+
+        outputState();
         return state;
     }
 
@@ -84,6 +120,9 @@ public class AESCipher {
         }
     }
 
+    //-----------------------------------------------------------------------------------------------------------
+    //                                         Методы для шифрования
+    //-----------------------------------------------------------------------------------------------------------
     private void subBytes() {
         int row, column;
         for (int r = 0; r < 4; r++) {
@@ -91,24 +130,73 @@ public class AESCipher {
                 row = (state[r][c] & 0xf0) >> 4;
                 column = (state[r][c] & 0x0f);
 
-                state[r][c] = sbox[16 * row + column];
+                if (mode == Mode.Encrypt)
+                    state[r][c] = sbox[16 * row + column];
+                else
+                    state[r][c] = invSbox[16 * row + column];
             }
         }
     }
 
     private void shiftRows() {
         for (int r = 1; r < 4; r++) {
-            shiftArray(state[r], -r); //сдвиг влево
+            if (mode == Mode.Encrypt)
+                shiftArray(state[r], -r); //сдвиг влево
+            else
+                shiftArray(state[r], r); //сдвиг вправо
         }
     }
 
     private void mixColumns() {
         int s0, s1, s2, s3;
         for (int c = 0; c < nb; c++) {
-            s0 = multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c];
-            s1 = state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c];
-            s2 = state[0][c] ^ state[1][c] ^ multiply(state[2][c], 0x02) ^ multiply(state[3][c], 0x03);
-            s3 = multiply(state[0][c], 0x03) ^ state[1][c] ^ state[2][c] ^ multiply(state[3][c], 0x02);
+            if (mode == Mode.Encrypt) {
+                s0 = multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c];
+                s1 = state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c];
+                s2 = state[0][c] ^ state[1][c] ^ multiply(state[2][c], 0x02) ^ multiply(state[3][c], 0x03);
+                s3 = multiply(state[0][c], 0x03) ^ state[1][c] ^ state[2][c] ^ multiply(state[3][c], 0x02);
+            } else {
+                s0 = multiply(state[0][c], 0x0e) ^ multiply(state[1][c], 0x0b) ^ multiply(state[2][c], 0x0d) ^ multiply(state[3][c], 0x09);
+                s1 = multiply(state[0][c], 0x09) ^ multiply(state[1][c], 0x0e) ^ multiply(state[2][c], 0x0b) ^ multiply(state[3][c], 0x0d);
+                s2 = multiply(state[0][c], 0x0d) ^ multiply(state[1][c], 0x09) ^ multiply(state[2][c], 0x0e) ^ multiply(state[3][c], 0x0b);
+                s3 = multiply(state[0][c], 0x0b) ^ multiply(state[1][c], 0x0d) ^ multiply(state[2][c], 0x09) ^ multiply(state[3][c], 0x0e);
+            }
+
+            state[0][c] = s0;
+            state[1][c] = s1;
+            state[2][c] = s2;
+            state[3][c] = s3;
+        }
+    }
+
+    //-----------------------------------------------------------------------------------------------------------
+    //                                         Методы для расшифрования
+    //-----------------------------------------------------------------------------------------------------------
+    private void invSubBytes() {
+        int row, column;
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < nb; c++) {
+                row = (state[r][c] & 0xf0) >> 4;
+                column = (state[r][c] & 0x0f);
+
+                state[r][c] = invSbox[16 * row + column];
+            }
+        }
+    }
+
+    private void invShiftRows() {
+        for (int r = 1; r < 4; r++) {
+            shiftArray(state[r], r); //сдвиг вправо
+        }
+    }
+
+    private void invMixColumns() {
+        int s0, s1, s2, s3;
+        for (int c = 0; c < nb; c++) {
+            s0 = multiply(state[0][c], 0x0e) ^ multiply(state[1][c], 0x0b) ^ multiply(state[2][c], 0x0d) ^ multiply(state[3][c], 0x09);
+            s1 = multiply(state[0][c], 0x09) ^ multiply(state[1][c], 0x0e) ^ multiply(state[2][c], 0x0b) ^ multiply(state[3][c], 0x0d);
+            s2 = multiply(state[0][c], 0x0d) ^ multiply(state[1][c], 0x09) ^ multiply(state[2][c], 0x0e) ^ multiply(state[3][c], 0x0b);
+            s3 = multiply(state[0][c], 0x0b) ^ multiply(state[1][c], 0x0d) ^ multiply(state[2][c], 0x09) ^ multiply(state[3][c], 0x0e);
 
             state[0][c] = s0;
             state[1][c] = s1;
@@ -128,16 +216,16 @@ public class AESCipher {
     }
 
     private class Key {
-        private int[][] keySchedule = new int[4][nb * (nr + 1)]; //матрица раудовых ключей
+        int[][] keySchedule = new int[4][nb * (nr + 1)]; //матрица раудовых ключей
 
-        private int[][] rcon = {
+        int[][] rcon = {
                 {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
         };
 
-        private Key(int[] secretKey) {
+        Key(int[] secretKey) {
             for (int r = 0; r < 4; r++) {
                 for (int c = 0; c < nb; c++) {
                     keySchedule[r][c] = secretKey[r + 4 * c];
@@ -146,7 +234,8 @@ public class AESCipher {
         }
 
         int[] temp = new int[4]; //хранит значение столбца из массива keySchedule для дальнейших преобразований
-        private void keyExpansion() {
+
+        void keyExpansion() {
             // index - указатель на текущий столбец
             for (int index = nk; index < keySchedule[0].length; index++) {
                 if (index % nk == 0) {
@@ -164,7 +253,8 @@ public class AESCipher {
             }
         }
 
-        private int[] getColumn(int index) {
+
+        int[] getColumn(int index) {
             int[] column = new int[4];
             for (int i = 0; i < 4; i++) {
                 column[i] = keySchedule[i][index];
@@ -172,11 +262,11 @@ public class AESCipher {
             return column;
         }
 
-        int countRound = 0;
+        //int countRound = 0;
 
-        public int[][] getRoundKey() {
+        int[][] getRoundKey(int startColumn) {
             int[][] block = new int[4][nb];
-            int startColumn = (countRound++) * 4;
+            startColumn = (countRound++) * 4;
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < nk; c++)
                     block[r][c] = keySchedule[r][startColumn + c];
@@ -184,11 +274,11 @@ public class AESCipher {
             return block;
         }
 
-        private void rotWord() {
+        void rotWord() {
             shiftArray(temp, -1);
         }
 
-        private void subWord() {
+        void subWord() {
             int row, column;
             for (int r = 0; r < 4; r++) {
                 row = (temp[r] & 0xf0) >> 4;
@@ -197,29 +287,16 @@ public class AESCipher {
                 temp[r] = sbox[16 * row + column];
             }
         }
-
-        public void outputState() {
-            for (int r = 0; r < 4; r++) {
-                for (int c = 0; c < keySchedule[0].length; c++) {
-                    if (c % 4 == 0) System.out.print("  ");
-                    System.out.printf("%2s ", Integer.toHexString(keySchedule[r][c]));
-                }
-                System.out.println();
-            }
-            System.out.println();
-        }
     }
-
-
 
     /*
      * ---------------------------------------------------------------------------------------
-     *                           Вспомогательные методы
+     *                               Вспомогательные методы
      * ---------------------------------------------------------------------------------------
      */
 
     //Сдвигает элементы массива вправо/влево на n элементов
-    public void shiftArray(int[] array, int n) {
+    private void shiftArray(int[] array, int n) {
         int[] temp;
         if (n <= 0) { // сдвиг влево
             n = -n;
@@ -257,12 +334,33 @@ public class AESCipher {
             case 0x03:
                 result = multiply(a, 0x02) ^ a;
                 break;
+            case 0x09:
+                result = multiply(multiply(multiply(a, 0x02), 0x02), 0x02) ^ a;
+                break;
+            case 0x0b:
+                result = multiply(multiply(multiply(a, 0x02), 0x02), 0x02) ^ multiply(a, 0x02) ^ a;
+                break;
+            case 0x0d:
+                result = multiply(multiply(multiply(a, 0x02), 0x02), 0x02) ^ multiply(multiply(a, 0x02), 0x02) ^ a;
+                break;
+            case 0x0e:
+                result = multiply(multiply(multiply(a, 0x02), 0x02), 0x02) ^ multiply(multiply(a, 0x02), 0x02) ^ multiply(a, 0x02);
+                break;
         }
         return result;
     }
 
+    private int[] output() {
+        int[] outArr = new int[4 * nb];
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < nb; c++) {
+                outArr[r + 4 * c] = state[r][c];
+            }
+        }
+        return outArr;
+    }
 
-    public void outputState() {
+    private void outputState() {
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < nb; c++) {
                 System.out.print(Integer.toHexString(state[r][c]) + " ");
