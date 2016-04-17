@@ -5,12 +5,15 @@ import java.util.Arrays;
 /**
  * Класс реализующий шифрование и расшифровку с помощью алгоритма
  * AES (Rijndael)
+ *
+ * @author Azamat Abidokov
  */
 public class AESCipher {
     private final int nb = 4; //количество столбцов в массиве state
     private final int nk = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
     private final int nr = 10; //число раундов
 
+    //матрица замен байтов, используется при шифровке в методе subBytes()
     private int[] sbox = {
             0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
             0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -30,6 +33,7 @@ public class AESCipher {
             0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
     };
 
+    //матрица замен байтов, используется при расшифровке в методе subBytes()
     private int[] invSbox = {
             0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
             0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
@@ -49,26 +53,38 @@ public class AESCipher {
             0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
     };
 
+    //режим работы методов (шифрование/расшифровка)
     private enum Mode {
-        Encrypt, Decrypt
+        ENCRYPT, DECRYPT
     }
 
+    //хранит текущий режим
     private Mode mode;
 
-    private int[][] state = new int[4][nb]; //матрица над которой будут производиться преобразования
-    private Key keyObj; //класс для генерации ключей
+    //матрица над которой будут производиться преобразования
+    private int[][] state = new int[4][nb];
 
+    //ссыка на класс для генерации раундовых ключей
+    private Key keyObj;
+
+    /**
+     * Шифрует входную последовательнойть байт и возвращает рузультат.
+     *
+     * @param plainText Исходный (открытый) массив данных
+     * @param secretKey Секретный ключ для шифрования данных
+     * @return Зашифрованный блок данных
+     */
     public int[] encrypt(int[] plainText, int[] secretKey) {
-        mode = Mode.Encrypt; //encryption mode
+        mode = Mode.ENCRYPT; //encryption mode
 
         keyObj = new Key(secretKey);
         keyObj.keyExpansion();
         fillState(plainText);
 
-        //-------------Инициализация--------------------------
+        //---------------Инициализация--------------------------
         addRoundKey();
 
-        //--------------nr-1 раундов--------------------------
+        //----------------nr-1 раундов--------------------------
         for (int i = 0; i < nr - 1; i++) {
             subBytes();
             shiftRows();
@@ -76,42 +92,48 @@ public class AESCipher {
             addRoundKey();
         }
 
-        //-----------------Последний раунд---------------------
+        //------------------Последний раунд---------------------
         subBytes();
         shiftRows();
         addRoundKey();
 
-        outputState();
         return output();
     }
 
-    public int[][] decrypt(int[] cipherText, int[] secretKey) {
-        mode = Mode.Decrypt; //decryption mode
+    /**
+     * Расшифровывает входную последовательнойть байт и возвращает рузультат.
+     *
+     * @param cipherText Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
+     * @param secretKey Секретный ключ для шифрования данных
+     * @return Расшифрованный массив данных
+     */
+    public int[] decrypt(int[] cipherText, int[] secretKey) {
+        mode = Mode.DECRYPT; //decryption mode
 
         keyObj = new Key(secretKey);
         keyObj.keyExpansion();
         fillState(cipherText);
 
-        //-------------Инициализация--------------------------
+        //---------------Инициализация--------------------------
         addRoundKey();
 
-        //--------------nr-1 раундов--------------------------
+        //----------------nr-1 раундов--------------------------
         for (int i = nr - 1; i > 0; i--) {
-            invShiftRows();
-            invSubBytes();
-            invMixColumns();
+            shiftRows();
+            subBytes();
             addRoundKey();
+            mixColumns();
         }
 
         //-----------------Последний раунд---------------------
-        invShiftRows();
-        invSubBytes();
+        shiftRows();
+        subBytes();
         addRoundKey();
 
-        outputState();
-        return state;
+        return output();
     }
 
+    //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
     private void fillState(int[] bytes) {
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < nb; c++) {
@@ -121,8 +143,10 @@ public class AESCipher {
     }
 
     //-----------------------------------------------------------------------------------------------------------
-    //                                         Методы для шифрования
+    //                                         Методы для шифрования/расшифрования
     //-----------------------------------------------------------------------------------------------------------
+
+    //заменяет значения в state на соответствующие из таблицы sbox
     private void subBytes() {
         int row, column;
         for (int r = 0; r < 4; r++) {
@@ -130,7 +154,7 @@ public class AESCipher {
                 row = (state[r][c] & 0xf0) >> 4;
                 column = (state[r][c] & 0x0f);
 
-                if (mode == Mode.Encrypt)
+                if (mode == Mode.ENCRYPT)
                     state[r][c] = sbox[16 * row + column];
                 else
                     state[r][c] = invSbox[16 * row + column];
@@ -138,19 +162,22 @@ public class AESCipher {
         }
     }
 
+    //Сдвигает элементы в строках state
     private void shiftRows() {
         for (int r = 1; r < 4; r++) {
-            if (mode == Mode.Encrypt)
+            if (mode == Mode.ENCRYPT)
                 shiftArray(state[r], -r); //сдвиг влево
             else
                 shiftArray(state[r], r); //сдвиг вправо
         }
     }
 
+    /* Умножает каждый столбец с state на соответсующие коэффициенты,
+     * умножение производится по правилам умножения в поле Галуа (GF) */
     private void mixColumns() {
         int s0, s1, s2, s3;
         for (int c = 0; c < nb; c++) {
-            if (mode == Mode.Encrypt) {
+            if (mode == Mode.ENCRYPT) {
                 s0 = multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c];
                 s1 = state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c];
                 s2 = state[0][c] ^ state[1][c] ^ multiply(state[2][c], 0x02) ^ multiply(state[3][c], 0x03);
@@ -169,55 +196,36 @@ public class AESCipher {
         }
     }
 
-    //-----------------------------------------------------------------------------------------------------------
-    //                                         Методы для расшифрования
-    //-----------------------------------------------------------------------------------------------------------
-    private void invSubBytes() {
-        int row, column;
-        for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < nb; c++) {
-                row = (state[r][c] & 0xf0) >> 4;
-                column = (state[r][c] & 0x0f);
 
-                state[r][c] = invSbox[16 * row + column];
-            }
-        }
-    }
+    //счетчик раундов
+    int countRound = 0;
 
-    private void invShiftRows() {
-        for (int r = 1; r < 4; r++) {
-            shiftArray(state[r], r); //сдвиг вправо
-        }
-    }
-
-    private void invMixColumns() {
-        int s0, s1, s2, s3;
-        for (int c = 0; c < nb; c++) {
-            s0 = multiply(state[0][c], 0x0e) ^ multiply(state[1][c], 0x0b) ^ multiply(state[2][c], 0x0d) ^ multiply(state[3][c], 0x09);
-            s1 = multiply(state[0][c], 0x09) ^ multiply(state[1][c], 0x0e) ^ multiply(state[2][c], 0x0b) ^ multiply(state[3][c], 0x0d);
-            s2 = multiply(state[0][c], 0x0d) ^ multiply(state[1][c], 0x09) ^ multiply(state[2][c], 0x0e) ^ multiply(state[3][c], 0x0b);
-            s3 = multiply(state[0][c], 0x0b) ^ multiply(state[1][c], 0x0d) ^ multiply(state[2][c], 0x09) ^ multiply(state[3][c], 0x0e);
-
-            state[0][c] = s0;
-            state[1][c] = s1;
-            state[2][c] = s2;
-            state[3][c] = s3;
-
-        }
-    }
-
+    /* производит операцию XOR между state и roundKey
+     * roundKey получается из secretKey в методе keyExpantion внутреннего класса Key */
     public void addRoundKey() {
-        int[][] roundKey = keyObj.getRoundKey();
+        int[][] roundKey;
+        if (mode == Mode.ENCRYPT) {
+            roundKey = keyObj.getRoundKey(countRound++);
+        } else {
+            roundKey = keyObj.getRoundKey((nr - countRound++));
+        }
+
+        if (countRound == 11) countRound = 0;
+
         for (int c = 0; c < nb; c++) {
             for (int r = 0; r < 4; r++) {
                 state[r][c] = state[r][c] ^ roundKey[r][c];
             }
         }
+
     }
 
+    //Внутренний класс, генерирует раундовые ключи
     private class Key {
+        //храниц все ключи для всех рауднов
         int[][] keySchedule = new int[4][nb * (nr + 1)]; //матрица раудовых ключей
 
+        //используется для столбцов номера которых кратны nk
         int[][] rcon = {
                 {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
@@ -233,8 +241,10 @@ public class AESCipher {
             }
         }
 
-        int[] temp = new int[4]; //хранит значение столбца из массива keySchedule для дальнейших преобразований
+        //хранит значение столбца из массива keySchedule для дальнейших преобразований
+        int[] temp = new int[4];
 
+        //генерирует все раундовые ключи на основе начального ключа secretKey (передается в конструктор)
         void keyExpansion() {
             // index - указатель на текущий столбец
             for (int index = nk; index < keySchedule[0].length; index++) {
@@ -253,7 +263,7 @@ public class AESCipher {
             }
         }
 
-
+        //восвращает столбец под указанным номером (индексом)
         int[] getColumn(int index) {
             int[] column = new int[4];
             for (int i = 0; i < 4; i++) {
@@ -262,22 +272,22 @@ public class AESCipher {
             return column;
         }
 
-        //int countRound = 0;
-
+        //возвращает раундовый ключ roundKey
         int[][] getRoundKey(int startColumn) {
             int[][] block = new int[4][nb];
-            startColumn = (countRound++) * 4;
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < nk; c++)
-                    block[r][c] = keySchedule[r][startColumn + c];
+                    block[r][c] = keySchedule[r][startColumn * nb + c];
 
             return block;
         }
 
+        //осуществляет сдвиг элементов массива temp влево на один элемент
         void rotWord() {
             shiftArray(temp, -1);
         }
 
+        //заменяет элементы массива temp на соответствующие из таблицы sbox
         void subWord() {
             int row, column;
             for (int r = 0; r < 4; r++) {
@@ -289,13 +299,11 @@ public class AESCipher {
         }
     }
 
-    /*
-     * ---------------------------------------------------------------------------------------
-     *                               Вспомогательные методы
-     * ---------------------------------------------------------------------------------------
-     */
+     //---------------------------------------------------------------------------------------
+     //                               Вспомогательные методы
+     //---------------------------------------------------------------------------------------
 
-    //Сдвигает элементы массива вправо/влево на n элементов
+    //Сдвигает элементы массива array вправо/влево на n элементов
     private void shiftArray(int[] array, int n) {
         int[] temp;
         if (n <= 0) { // сдвиг влево
@@ -308,6 +316,7 @@ public class AESCipher {
             int index = 0;
             for (int c = array.length - n; c < array.length; c++)
                 array[c] = temp[index++];
+
         } else { //сдвиг вправо
             temp = Arrays.copyOfRange(array, array.length - n, array.length);
 
@@ -350,6 +359,7 @@ public class AESCipher {
         return result;
     }
 
+    //преобразуте матрицу state к одномерному массиву
     private int[] output() {
         int[] outArr = new int[4 * nb];
         for (int r = 0; r < 4; r++) {
@@ -359,15 +369,4 @@ public class AESCipher {
         }
         return outArr;
     }
-
-    private void outputState() {
-        for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < nb; c++) {
-                System.out.print(Integer.toHexString(state[r][c]) + " ");
-            }
-            System.out.println();
-        }
-        System.out.println();
-    }
-
 }

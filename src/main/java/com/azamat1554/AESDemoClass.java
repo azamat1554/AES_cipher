@@ -25,6 +25,7 @@ public class AESDemoClass {
         };
 
         int[] cipherText = aes.encrypt(bytesmass, secretKey);
-        aes.decrypt(cipherText, secretKey);
+        int[] decryptText = aes.decrypt(cipherText, secretKey);
+        System.out.println(Arrays.equals(bytesmass, decryptText));
     }
 }
