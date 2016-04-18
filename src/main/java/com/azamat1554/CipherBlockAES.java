@@ -3,15 +3,15 @@ package com.azamat1554;
 import java.util.Arrays;
 
 /**
- * Класс реализующий шифрование и расшифровку с помощью алгоритма
+ * Класс реализующий шифрование и расшифровку блоков байтов с помощью алгоритма
  * AES (Rijndael)
  *
  * @author Azamat Abidokov
  */
-public class AESCipher {
-    private final int nb = 4; //количество столбцов в массиве state
-    private final int nk = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
-    private final int nr = 10; //число раундов
+public class CipherBlockAES {
+    public final int NB = 4; //количество столбцов в массиве state
+    public final int NK = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
+    public final int NR = 10; //число раундов
 
     //матрица замен байтов, используется при шифровке в методе subBytes()
     private int[] sbox = {
@@ -62,7 +62,7 @@ public class AESCipher {
     private Mode mode;
 
     //матрица над которой будут производиться преобразования
-    private int[][] state = new int[4][nb];
+    private int[][] state = new int[4][NB];
 
     //ссыка на класс для генерации раундовых ключей
     private Key keyObj;
@@ -85,7 +85,7 @@ public class AESCipher {
         addRoundKey();
 
         //----------------nr-1 раундов--------------------------
-        for (int i = 0; i < nr - 1; i++) {
+        for (int i = 0; i < NR - 1; i++) {
             subBytes();
             shiftRows();
             mixColumns();
@@ -118,7 +118,7 @@ public class AESCipher {
         addRoundKey();
 
         //----------------nr-1 раундов--------------------------
-        for (int i = nr - 1; i > 0; i--) {
+        for (int i = NR - 1; i > 0; i--) {
             shiftRows();
             subBytes();
             addRoundKey();
@@ -136,21 +136,21 @@ public class AESCipher {
     //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
     private void fillState(int[] bytes) {
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < nb; c++) {
+            for (int c = 0; c < NB; c++) {
                 state[r][c] = bytes[r + 4 * c];
             }
         }
     }
 
     //-----------------------------------------------------------------------------------------------------------
-    //                                         Методы для шифрования/расшифрования
+    //                                      Методы для шифрования/расшифрования
     //-----------------------------------------------------------------------------------------------------------
 
     //заменяет значения в state на соответствующие из таблицы sbox
     private void subBytes() {
         int row, column;
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < nb; c++) {
+            for (int c = 0; c < NB; c++) {
                 row = (state[r][c] & 0xf0) >> 4;
                 column = (state[r][c] & 0x0f);
 
@@ -176,7 +176,7 @@ public class AESCipher {
      * умножение производится по правилам умножения в поле Галуа (GF) */
     private void mixColumns() {
         int s0, s1, s2, s3;
-        for (int c = 0; c < nb; c++) {
+        for (int c = 0; c < NB; c++) {
             if (mode == Mode.ENCRYPT) {
                 s0 = multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c];
                 s1 = state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c];
@@ -202,28 +202,27 @@ public class AESCipher {
 
     /* производит операцию XOR между state и roundKey
      * roundKey получается из secretKey в методе keyExpantion внутреннего класса Key */
-    public void addRoundKey() {
+    private void addRoundKey() {
         int[][] roundKey;
         if (mode == Mode.ENCRYPT) {
             roundKey = keyObj.getRoundKey(countRound++);
         } else {
-            roundKey = keyObj.getRoundKey((nr - countRound++));
+            roundKey = keyObj.getRoundKey((NR - countRound++));
         }
 
         if (countRound == 11) countRound = 0;
 
-        for (int c = 0; c < nb; c++) {
+        for (int c = 0; c < NB; c++) {
             for (int r = 0; r < 4; r++) {
                 state[r][c] = state[r][c] ^ roundKey[r][c];
             }
         }
-
     }
 
     //Внутренний класс, генерирует раундовые ключи
     private class Key {
         //храниц все ключи для всех рауднов
-        int[][] keySchedule = new int[4][nb * (nr + 1)]; //матрица раудовых ключей
+        int[][] keySchedule = new int[4][NB * (NR + 1)]; //матрица раудовых ключей
 
         //используется для столбцов номера которых кратны nk
         int[][] rcon = {
@@ -235,7 +234,7 @@ public class AESCipher {
 
         Key(int[] secretKey) {
             for (int r = 0; r < 4; r++) {
-                for (int c = 0; c < nb; c++) {
+                for (int c = 0; c < NB; c++) {
                     keySchedule[r][c] = secretKey[r + 4 * c];
                 }
             }
@@ -247,17 +246,17 @@ public class AESCipher {
         //генерирует все раундовые ключи на основе начального ключа secretKey (передается в конструктор)
         void keyExpansion() {
             // index - указатель на текущий столбец
-            for (int index = nk; index < keySchedule[0].length; index++) {
-                if (index % nk == 0) {
+            for (int index = NK; index < keySchedule[0].length; index++) {
+                if (index % NK == 0) {
                     temp = getColumn(index - 1); //возвращяет предыдущий столбец таблицы keySchedule
                     rotWord(); //сдвиг на один элемент
                     subWord(); //замена байтов значениями из таллицы sbox
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = temp[r] ^ keySchedule[r][index - nk] ^ rcon[r][index / nk - 1];
+                        keySchedule[r][index] = temp[r] ^ keySchedule[r][index - NK] ^ rcon[r][index / NK - 1];
                     }
                 } else {
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = keySchedule[r][index - 1] ^ keySchedule[r][index - nk];
+                        keySchedule[r][index] = keySchedule[r][index - 1] ^ keySchedule[r][index - NK];
                     }
                 }
             }
@@ -274,10 +273,10 @@ public class AESCipher {
 
         //возвращает раундовый ключ roundKey
         int[][] getRoundKey(int startColumn) {
-            int[][] block = new int[4][nb];
+            int[][] block = new int[4][NB];
             for (int r = 0; r < 4; r++)
-                for (int c = 0; c < nk; c++)
-                    block[r][c] = keySchedule[r][startColumn * nb + c];
+                for (int c = 0; c < NK; c++)
+                    block[r][c] = keySchedule[r][startColumn * NB + c];
 
             return block;
         }
@@ -361,9 +360,9 @@ public class AESCipher {
 
     //преобразуте матрицу state к одномерному массиву
     private int[] output() {
-        int[] outArr = new int[4 * nb];
+        int[] outArr = new int[4 * NB];
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < nb; c++) {
+            for (int c = 0; c < NB; c++) {
                 outArr[r + 4 * c] = state[r][c];
             }
         }
