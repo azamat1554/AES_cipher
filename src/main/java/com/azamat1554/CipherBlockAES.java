@@ -62,7 +62,7 @@ public class CipherBlockAES {
     private Mode mode;
 
     //матрица над которой будут производиться преобразования
-    private int[][] state = new int[4][NB];
+    private byte[][] state = new byte[4][NB];
 
     //ссыка на класс для генерации раундовых ключей
     private Key keyObj;
@@ -74,7 +74,7 @@ public class CipherBlockAES {
      * @param secretKey Секретный ключ для шифрования данных
      * @return Зашифрованный блок данных
      */
-    public int[] encrypt(int[] plainText, int[] secretKey) {
+    public byte[] encrypt(byte[] plainText, byte[] secretKey) {
         mode = Mode.ENCRYPT; //encryption mode
 
         keyObj = new Key(secretKey);
@@ -107,7 +107,7 @@ public class CipherBlockAES {
      * @param secretKey Секретный ключ для шифрования данных
      * @return Расшифрованный массив данных
      */
-    public int[] decrypt(int[] cipherText, int[] secretKey) {
+    public byte[] decrypt(byte[] cipherText, byte[] secretKey) {
         mode = Mode.DECRYPT; //decryption mode
 
         keyObj = new Key(secretKey);
@@ -134,7 +134,7 @@ public class CipherBlockAES {
     }
 
     //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
-    private void fillState(int[] bytes) {
+    private void fillState(byte[] bytes) {
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < NB; c++) {
                 state[r][c] = bytes[r + 4 * c];
@@ -155,9 +155,9 @@ public class CipherBlockAES {
                 column = (state[r][c] & 0x0f);
 
                 if (mode == Mode.ENCRYPT)
-                    state[r][c] = sbox[16 * row + column];
+                    state[r][c] = (byte) sbox[16 * row + column];
                 else
-                    state[r][c] = invSbox[16 * row + column];
+                    state[r][c] = (byte) invSbox[16 * row + column];
             }
         }
     }
@@ -175,18 +175,18 @@ public class CipherBlockAES {
     /* Умножает каждый столбец с state на соответсующие коэффициенты,
      * умножение производится по правилам умножения в поле Галуа (GF) */
     private void mixColumns() {
-        int s0, s1, s2, s3;
+        byte s0, s1, s2, s3;
         for (int c = 0; c < NB; c++) {
             if (mode == Mode.ENCRYPT) {
-                s0 = multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c];
-                s1 = state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c];
-                s2 = state[0][c] ^ state[1][c] ^ multiply(state[2][c], 0x02) ^ multiply(state[3][c], 0x03);
-                s3 = multiply(state[0][c], 0x03) ^ state[1][c] ^ state[2][c] ^ multiply(state[3][c], 0x02);
+                s0 = (byte) (multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c]);
+                s1 = (byte) (state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c]);
+                s2 = (byte) (state[0][c] ^ state[1][c] ^ multiply(state[2][c], 0x02) ^ multiply(state[3][c], 0x03));
+                s3 = (byte) (multiply(state[0][c], 0x03) ^ state[1][c] ^ state[2][c] ^ multiply(state[3][c], 0x02));
             } else {
-                s0 = multiply(state[0][c], 0x0e) ^ multiply(state[1][c], 0x0b) ^ multiply(state[2][c], 0x0d) ^ multiply(state[3][c], 0x09);
-                s1 = multiply(state[0][c], 0x09) ^ multiply(state[1][c], 0x0e) ^ multiply(state[2][c], 0x0b) ^ multiply(state[3][c], 0x0d);
-                s2 = multiply(state[0][c], 0x0d) ^ multiply(state[1][c], 0x09) ^ multiply(state[2][c], 0x0e) ^ multiply(state[3][c], 0x0b);
-                s3 = multiply(state[0][c], 0x0b) ^ multiply(state[1][c], 0x0d) ^ multiply(state[2][c], 0x09) ^ multiply(state[3][c], 0x0e);
+                s0 = (byte) (multiply(state[0][c], 0x0e) ^ multiply(state[1][c], 0x0b) ^ multiply(state[2][c], 0x0d) ^ multiply(state[3][c], 0x09));
+                s1 = (byte) (multiply(state[0][c], 0x09) ^ multiply(state[1][c], 0x0e) ^ multiply(state[2][c], 0x0b) ^ multiply(state[3][c], 0x0d));
+                s2 = (byte) (multiply(state[0][c], 0x0d) ^ multiply(state[1][c], 0x09) ^ multiply(state[2][c], 0x0e) ^ multiply(state[3][c], 0x0b));
+                s3 = (byte) (multiply(state[0][c], 0x0b) ^ multiply(state[1][c], 0x0d) ^ multiply(state[2][c], 0x09) ^ multiply(state[3][c], 0x0e));
             }
 
             state[0][c] = s0;
@@ -203,7 +203,7 @@ public class CipherBlockAES {
     /* производит операцию XOR между state и roundKey
      * roundKey получается из secretKey в методе keyExpantion внутреннего класса Key */
     private void addRoundKey() {
-        int[][] roundKey;
+        byte[][] roundKey;
         if (mode == Mode.ENCRYPT) {
             roundKey = keyObj.getRoundKey(countRound++);
         } else {
@@ -214,7 +214,7 @@ public class CipherBlockAES {
 
         for (int c = 0; c < NB; c++) {
             for (int r = 0; r < 4; r++) {
-                state[r][c] = state[r][c] ^ roundKey[r][c];
+                state[r][c] = (byte) (state[r][c] ^ roundKey[r][c]);
             }
         }
     }
@@ -222,7 +222,7 @@ public class CipherBlockAES {
     //Внутренний класс, генерирует раундовые ключи
     private class Key {
         //храниц все ключи для всех рауднов
-        int[][] keySchedule = new int[4][NB * (NR + 1)]; //матрица раудовых ключей
+        byte[][] keySchedule = new byte[4][NB * (NR + 1)]; //матрица раудовых ключей
 
         //используется для столбцов номера которых кратны nk
         int[][] rcon = {
@@ -232,7 +232,7 @@ public class CipherBlockAES {
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
         };
 
-        Key(int[] secretKey) {
+        Key(byte[] secretKey) {
             for (int r = 0; r < 4; r++) {
                 for (int c = 0; c < NB; c++) {
                     keySchedule[r][c] = secretKey[r + 4 * c];
@@ -241,7 +241,7 @@ public class CipherBlockAES {
         }
 
         //хранит значение столбца из массива keySchedule для дальнейших преобразований
-        int[] temp = new int[4];
+        byte[] temp = new byte[4];
 
         //генерирует все раундовые ключи на основе начального ключа secretKey (передается в конструктор)
         void keyExpansion() {
@@ -252,19 +252,19 @@ public class CipherBlockAES {
                     rotWord(); //сдвиг на один элемент
                     subWord(); //замена байтов значениями из таллицы sbox
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = temp[r] ^ keySchedule[r][index - NK] ^ rcon[r][index / NK - 1];
+                        keySchedule[r][index] = (byte) (temp[r] ^ keySchedule[r][index - NK] ^ rcon[r][index / NK - 1]);
                     }
                 } else {
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = keySchedule[r][index - 1] ^ keySchedule[r][index - NK];
+                        keySchedule[r][index] = (byte) (keySchedule[r][index - 1] ^ keySchedule[r][index - NK]);
                     }
                 }
             }
         }
 
         //восвращает столбец под указанным номером (индексом)
-        int[] getColumn(int index) {
-            int[] column = new int[4];
+        byte[] getColumn(int index) {
+            byte[] column = new byte[4];
             for (int i = 0; i < 4; i++) {
                 column[i] = keySchedule[i][index];
             }
@@ -272,8 +272,8 @@ public class CipherBlockAES {
         }
 
         //возвращает раундовый ключ roundKey
-        int[][] getRoundKey(int startColumn) {
-            int[][] block = new int[4][NB];
+        byte[][] getRoundKey(int startColumn) {
+            byte[][] block = new byte[4][NB];
             for (int r = 0; r < 4; r++)
                 for (int c = 0; c < NK; c++)
                     block[r][c] = keySchedule[r][startColumn * NB + c];
@@ -293,7 +293,7 @@ public class CipherBlockAES {
                 row = (temp[r] & 0xf0) >> 4;
                 column = (temp[r] & 0x0f);
 
-                temp[r] = sbox[16 * row + column];
+                temp[r] = (byte) sbox[16 * row + column];
             }
         }
     }
@@ -303,8 +303,8 @@ public class CipherBlockAES {
      //---------------------------------------------------------------------------------------
 
     //Сдвигает элементы массива array вправо/влево на n элементов
-    private void shiftArray(int[] array, int n) {
-        int[] temp;
+    private void shiftArray(byte[] array, int n) {
+        byte[] temp;
         if (n <= 0) { // сдвиг влево
             n = -n;
             temp = Arrays.copyOf(array, n);
@@ -329,11 +329,12 @@ public class CipherBlockAES {
     }
 
     //Выполняет умножение чисел в поле Галуа
-    private int multiply(int a, int b) {
+    private byte multiply(byte a, int b) {
         int result = 0;
         switch (b) {
             case 0x02:
-                if (a < 0x80) {
+                //// TODO: 19.04.2016 Ошибка с типами
+                if ((a & 0x80) != 0x01) {
                     result = (a << 1) & 0xff;
                 } else {
                     result = ((a << 1) ^ 0x1b) & 0xff;
@@ -355,12 +356,12 @@ public class CipherBlockAES {
                 result = multiply(multiply(multiply(a, 0x02), 0x02), 0x02) ^ multiply(multiply(a, 0x02), 0x02) ^ multiply(a, 0x02);
                 break;
         }
-        return result;
+        return (byte) result;
     }
 
     //преобразуте матрицу state к одномерному массиву
-    private int[] output() {
-        int[] outArr = new int[4 * NB];
+    private byte[] output() {
+        byte[] outArr = new byte[4 * NB];
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < NB; c++) {
                 outArr[r + 4 * c] = state[r][c];
