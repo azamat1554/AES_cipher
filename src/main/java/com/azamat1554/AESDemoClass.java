@@ -36,6 +36,8 @@ public class AESDemoClass {
         byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText), secretKey);
         System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
 
+
+        input.close();
         //output(cipherText);
         //output(decryptText);
 
