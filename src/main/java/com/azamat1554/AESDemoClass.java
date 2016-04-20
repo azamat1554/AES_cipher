@@ -26,32 +26,13 @@ public class AESDemoClass {
             e.printStackTrace();
         }
 
-//        byte[] bytesOfMsg = {
-//                0x32, 0x43, (byte) 0xf6, (byte) 0xa8,
-//                (byte) 0x88, 0x5a, 0x30, (byte) 0x8d,
-//                0x31, 0x31, (byte) 0x98, (byte) 0xa2,
-//                (byte) 0xe0, 0x37, 0x07, 0x34
-//        };
-//
-//        output(bytesOfMsg);
-//
-//        byte[] secretKey = {
-//                0x2b, 0x7e, 0x15, 0x16,
-//                0x28, (byte) 0xae, (byte) 0xd2, (byte) 0xa6,
-//                (byte) 0xab, (byte) 0xf7, 0x15, (byte) 0x88,
-//                0x09, (byte) 0xcf, 0x4f, 0x3c
-//        };
-//        output(secretKey);
-
         CipherAES aes = new CipherAES();
-
-        //int[] secretKey = castToInt(key);
-        //int[] bytesOfMsg = castToInt(bytes);
 
         byte[] cipherText = aes.encrypt(bytesOfMsg, secretKey);
         String encodingText = Base64.getEncoder().encodeToString(cipherText);
         System.out.println("\nEncrypted text:\n" + encodingText);
 
+        //System.out.println("\nIn order to decrypt message, enter it below:");
         byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText), secretKey);
         System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
 

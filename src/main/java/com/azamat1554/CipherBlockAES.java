@@ -74,7 +74,7 @@ public class CipherBlockAES {
      * @param secretKey Секретный ключ для шифрования данных
      * @return Зашифрованный блок данных
      */
-    public byte[] encrypt(byte[] plainText, byte[] secretKey) {
+    public byte[] encryptBlock(byte[] plainText, byte[] secretKey) {
         mode = Mode.ENCRYPT; //encryption mode
 
         keyObj = new Key(secretKey);
@@ -107,7 +107,7 @@ public class CipherBlockAES {
      * @param secretKey Секретный ключ для шифрования данных
      * @return Расшифрованный массив данных
      */
-    public byte[] decrypt(byte[] cipherText, byte[] secretKey) {
+    public byte[] decryptBlock(byte[] cipherText, byte[] secretKey) {
         mode = Mode.DECRYPT; //decryption mode
 
         keyObj = new Key(secretKey);
@@ -329,12 +329,11 @@ public class CipherBlockAES {
     }
 
     //Выполняет умножение чисел в поле Галуа
-    private byte multiply(byte a, int b) {
+    private byte multiply(int a, int b) {
         int result = 0;
         switch (b) {
             case 0x02:
-                //// TODO: 19.04.2016 Ошибка с типами
-                if ((a & 0x80) != 0x01) {
+                if (((a & 0x80) >> 7) != 0x01) {
                     result = (a << 1) & 0xff;
                 } else {
                     result = ((a << 1) ^ 0x1b) & 0xff;

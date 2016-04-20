@@ -10,9 +10,14 @@ import java.util.Arrays;
  * @author Azamat Abidokov
  */
 public class CipherAES {
+    //переменная класса для шифрования и расшифровки блоков
     private CipherBlockAES cbAES;
+
+    //индекс на текущее положение во входном потоке байтов
     private int indexOfArray;
-    private byte[] arrayOfBytes;
+
+    //выходной поток байтов
+    private byte[] arrayOfBytes; //outputBytes
 
     public CipherAES() {
         cbAES = new CipherBlockAES();
@@ -29,12 +34,19 @@ public class CipherAES {
         //проверка на пустой массив
         if (plainText.length == 0) return null;
 
-        //входной поток
-        arrayOfBytes = new byte[(int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB)))]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
+        //отношение длины входного потока байтов к длине одного блока
+        double ratio = plainText.length / (4.0 * cbAES.NB);
+
+        //кол-во необходимых блоков
+        int numberOfBlock = (int) (ratio % 1 == 0 ? ratio + 1 : Math.ceil(ratio));
+
+        //выходной поток
+        arrayOfBytes = new byte[4 * cbAES.NB * numberOfBlock]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
+        //arrayOfBytes = new byte[(int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB)))]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
 
         indexOfArray = 0;
         while (hasNextBlock()) {
-            append(cbAES.encrypt(nextBlock(plainText), secretKey));
+            append(cbAES.encryptBlock(nextBlock(plainText), secretKey));
         }
         return arrayOfBytes;
     }
@@ -56,7 +68,8 @@ public class CipherAES {
         indexOfArray = 0;
         int endOfArray = 0;
         while (hasNextBlock()) {
-            endOfArray = append(cbAES.decrypt(nextBlock(cipherText), secretKey));
+
+            endOfArray = append(cbAES.decryptBlock(nextBlock(cipherText), secretKey));
         }
         arrayOfBytes = Arrays.copyOf(arrayOfBytes, endOfArray);
 
@@ -92,9 +105,16 @@ public class CipherAES {
     //присоединить обработанные байты в выходной массив
     private int append(byte[] block) {
         int end = indexOfArray - 4 * cbAES.NB;
-        for (int i = 0; i < block.length & i < arrayOfBytes.length; i++) {
-            if (isPadding(block, i)) break;
-            arrayOfBytes[end++] = block[i];
+
+        if (hasNextBlock()) {
+            for (int i = 0; i < block.length & i < arrayOfBytes.length; i++) {
+                arrayOfBytes[end++] = block[i];
+            }
+        } else {
+            for (int i = 0; i < block.length & i < arrayOfBytes.length; i++) {
+                if (isPadding(block, i)) break;
+                arrayOfBytes[end++] = block[i];
+            }
         }
         return end;
     }
