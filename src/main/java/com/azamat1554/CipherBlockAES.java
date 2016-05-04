@@ -133,15 +133,6 @@ public class CipherBlockAES {
         return output();
     }
 
-    //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
-    private void fillState(byte[] bytes) {
-        for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < NB; c++) {
-                state[r][c] = bytes[r + 4 * c];
-            }
-        }
-    }
-
     //-----------------------------------------------------------------------------------------------------------
     //                                      Методы для шифрования/расшифрования
     //-----------------------------------------------------------------------------------------------------------
@@ -302,6 +293,15 @@ public class CipherBlockAES {
      //                               Вспомогательные методы
      //---------------------------------------------------------------------------------------
 
+    //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
+    private void fillState(byte[] bytes) {
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < NB; c++) {
+                state[r][c] = bytes[r + 4 * c];
+            }
+        }
+    }
+
     //Сдвигает элементы массива array вправо/влево на n элементов
     private void shiftArray(byte[] array, int n) {
         byte[] temp;
@@ -358,7 +358,7 @@ public class CipherBlockAES {
         return (byte) result;
     }
 
-    //преобразуте матрицу state к одномерному массиву
+    //преобразует матрицу state к одномерному массиву
     private byte[] output() {
         byte[] outArr = new byte[4 * NB];
         for (int r = 0; r < 4; r++) {

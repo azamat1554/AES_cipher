@@ -13,14 +13,14 @@ import java.util.Scanner;
  */
 public class AESDemoFile {
     public static void main(String[] args) {
-        long start = System.currentTimeMillis();
+        //long start = System.currentTimeMillis();
         encrypt();
         //decrypt();
-        System.out.println((System.currentTimeMillis() - start) / 1000);
+        //System.out.println((System.currentTimeMillis() - start) / 1000);
     }
 
     public static void encrypt() {
-        try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file1");
+        try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file");
              FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2");
              Scanner input = new Scanner(System.in)) {
 
@@ -41,7 +41,10 @@ public class AESDemoFile {
 
             CipherAES aes = new CipherAES();
 
+            long start = System.currentTimeMillis();
             byte[] cipherText = aes.encrypt(bytesOfMsg, secretKey);
+            System.out.println((System.currentTimeMillis() - start) / 1000);
+
             fout.write(cipherText); //Base64.getEncoder().encode(cipherText));
         } catch (IOException e) {
             e.printStackTrace();

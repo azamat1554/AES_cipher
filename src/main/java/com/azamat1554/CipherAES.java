@@ -1,5 +1,10 @@
 package com.azamat1554;
 
+import com.azamat1554.mode.ECB;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 
 /**
@@ -19,8 +24,35 @@ public class CipherAES {
     //выходной поток байтов
     private byte[] arrayOfBytes; //outputBytes
 
+    /**
+     * Перечисление, которое содержит режимы шифрования
+     */
+    public enum Mode {
+        ECB, CBC
+    }
+
     public CipherAES() {
         cbAES = new CipherBlockAES();
+    }
+
+    //шифрует файл на который указывает параметр inputFlow
+    public ByteArrayOutputStream encrypt(FileInputStream inputFlow, byte[] secretKey, Mode mode) {
+        ECB ecb = new ECB();
+        ecb.encrypt(inputFlow, secretKey);
+        //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
+        //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
+
+        return null;
+    }
+
+    //расшифровывает файл на который указывает параметр inputFlow
+    public ByteArrayOutputStream decrypt(FileOutputStream inputFlow, byte[] secretKey, Mode mode) {
+        ECB ecb = new ECB();
+        ecb.decrypt(inputFlow, secretKey);
+        //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
+        //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
+
+        return null;
     }
 
     /**
@@ -68,7 +100,6 @@ public class CipherAES {
         indexOfArray = 0;
         int endOfArray = 0;
         while (hasNextBlock()) {
-
             endOfArray = append(cbAES.decryptBlock(nextBlock(cipherText), secretKey));
         }
         arrayOfBytes = Arrays.copyOf(arrayOfBytes, endOfArray);
@@ -92,10 +123,11 @@ public class CipherAES {
             if (indexOfArray < streamOfBytes.length)
                 block[i] = streamOfBytes[indexOfArray];
                 //Дополнение блока
-            else if (indexOfArray == streamOfBytes.length)
+            else if (indexOfArray == streamOfBytes.length) {
                 block[i] = (byte) 0x80;
-            else
-                block[i] = 0x00;
+                indexOfArray += block.length - i;
+                break;
+            }
 
             indexOfArray++;
         }

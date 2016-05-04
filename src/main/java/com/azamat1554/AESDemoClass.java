@@ -7,7 +7,11 @@ import java.util.Base64;
 import java.util.Scanner;
 
 /**
- * Created by FamilyAccount on 15.04.2016.
+ * Класс с которого начинается выполнение программы.
+ * Текст для шифрования вводится с клавиатуры в консоль, после чего вводится ключ шифрования,
+ * от которого вычисляется хэш (MD5).
+ *
+ * @author Azamat Abidokov
  */
 public class AESDemoClass {
     public static void main(String[] args) {
@@ -21,18 +25,23 @@ public class AESDemoClass {
 
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            secretKey = md.digest(secretKey);
+            secretKey = md.digest(secretKey); //вычисляет хэш
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
 
+        //объект класса, осуществляющего шифрование/расшифровку
         CipherAES aes = new CipherAES();
 
+        //шифрование
         byte[] cipherText = aes.encrypt(bytesOfMsg, secretKey);
+
+        //байты кодируются символами системы счисления Base64
         String encodingText = Base64.getEncoder().encodeToString(cipherText);
         System.out.println("\nEncrypted text:\n" + encodingText);
 
         //System.out.println("\nIn order to decrypt message, enter it below:");
+        //расшифровка
         byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText), secretKey);
         System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
 
