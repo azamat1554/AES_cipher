@@ -31,16 +31,15 @@ public class CipherBlockAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherBlockAES cbAES = new CipherBlockAES();
+    CipherBlockAES cbAES = new CipherBlockAES(secretKey);
 
     @Test
     public void testEncryptBlock() throws Exception {
-        assertArrayEquals(cipherBytes, cbAES.encryptBlock(bytesOfMsg, secretKey));
-
+        assertArrayEquals(cipherBytes, cbAES.encryptBlock(bytesOfMsg));
     }
 
     @Test
     public void testDecryptBlock() throws Exception {
-        assertArrayEquals(bytesOfMsg, cbAES.decryptBlock(cipherBytes, secretKey));
+        assertArrayEquals(bytesOfMsg, cbAES.decryptBlock(cipherBytes));
     }
 }

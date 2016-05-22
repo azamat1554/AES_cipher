@@ -2,6 +2,8 @@ package com.azamat1554;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 /**
@@ -31,15 +33,15 @@ public class CipherAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherAES cAES = new CipherAES();
+    CipherAES cAES = new CipherAES(secretKey);
 
     @Test
     public void testEncrypt() throws Exception {
-        assertArrayEquals(cipherBytes, cAES.encrypt(bytesOfMsg, secretKey));
+        assertArrayEquals(cipherBytes, cAES.encrypt(bytesOfMsg));
     }
 
     @Test
     public void testDecrypt() throws Exception {
-        assertArrayEquals(bytesOfMsg, cAES.decrypt(cipherBytes, secretKey));
+        assertArrayEquals(bytesOfMsg, Arrays.copyOf(cAES.decrypt(cipherBytes), cAES.getIndexOfArray()));
     }
 }

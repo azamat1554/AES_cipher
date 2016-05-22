@@ -31,14 +31,14 @@ public class CipherAES {
         ECB, CBC
     }
 
-    public CipherAES() {
-        cbAES = new CipherBlockAES();
+    public CipherAES(byte[] secretKey) {
+        cbAES = new CipherBlockAES(secretKey);
     }
 
     //шифрует файл на который указывает параметр inputFlow
-    public ByteArrayOutputStream encrypt(FileInputStream inputFlow, byte[] secretKey, Mode mode) {
-        ECB ecb = new ECB();
-        ecb.encrypt(inputFlow, secretKey);
+    public byte[] encrypt(FileInputStream inputFlow, byte[] secretKey, Mode mode) {
+        //ECB ecb = new ECB(secretKey);
+        //ecb.encrypt(inputFlow, secretKey);
         //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
         //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
 
@@ -46,9 +46,9 @@ public class CipherAES {
     }
 
     //расшифровывает файл на который указывает параметр inputFlow
-    public ByteArrayOutputStream decrypt(FileOutputStream inputFlow, byte[] secretKey, Mode mode) {
-        ECB ecb = new ECB();
-        ecb.decrypt(inputFlow, secretKey);
+    public byte[] decrypt(FileOutputStream inputFlow, byte[] secretKey, Mode mode) {
+        //ECB ecb = new ECB(secretKey);
+        //ecb.decrypt(inputFlow, secretKey);
         //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
         //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
 
@@ -59,10 +59,9 @@ public class CipherAES {
      * Шифрует входную последовательнойть байт и возвращает рузультат.
      *
      * @param plainText Исходный (открытый) массив данных
-     * @param secretKey Секретный ключ для шифрования данных
      * @return Зашифрованный блок данных
      */
-    public byte[] encrypt(byte[] plainText, byte[] secretKey) {
+    public byte[] encrypt(byte[] plainText) {
         //проверка на пустой массив
         if (plainText.length == 0) return null;
 
@@ -78,8 +77,9 @@ public class CipherAES {
 
         indexOfArray = 0;
         while (hasNextBlock()) {
-            append(cbAES.encryptBlock(nextBlock(plainText), secretKey));
+            append(cbAES.encryptBlock(nextBlock(plainText)));
         }
+
         return arrayOfBytes;
     }
 
@@ -87,10 +87,9 @@ public class CipherAES {
      * Расшифровывает входную последовательнойть байт и возвращает рузультат.
      *
      * @param cipherText Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
-     * @param secretKey  Секретный ключ для шифрования данных
      * @return Расшифрованный массив данных
      */
-    public byte[] decrypt(byte[] cipherText, byte[] secretKey) {
+    public byte[] decrypt(byte[] cipherText) {
         //проверка на пустой массив
         if (cipherText.length == 0) return null;
 
@@ -100,13 +99,18 @@ public class CipherAES {
         indexOfArray = 0;
         int endOfArray = 0;
         while (hasNextBlock()) {
-            endOfArray = append(cbAES.decryptBlock(nextBlock(cipherText), secretKey));
+            endOfArray = append(cbAES.decryptBlock(nextBlock(cipherText)));
         }
-        arrayOfBytes = Arrays.copyOf(arrayOfBytes, endOfArray);
 
+        indexOfArray = endOfArray; //todo temp desision
+        //arrayOfBytes = Arrays.copyOf(arrayOfBytes, endOfArray);
         return arrayOfBytes;
     }
 
+    //возвращает значение индекса, на текущее положение в массиве байтов
+    public int getIndexOfArray() {
+        return indexOfArray;
+    }
 
     //проверяет есть ли еще байты в потоке
     private boolean hasNextBlock() {
@@ -143,7 +147,7 @@ public class CipherAES {
                 arrayOfBytes[end++] = block[i];
             }
         } else {
-            for (int i = 0; i < block.length & i < arrayOfBytes.length; i++) {
+            for (int i = 0; i < block.length & end < arrayOfBytes.length; i++) {
                 if (isPadding(block, i)) break;
                 arrayOfBytes[end++] = block[i];
             }

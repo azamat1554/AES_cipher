@@ -12,6 +12,10 @@ import java.io.FileOutputStream;
  */
 public class ECB extends CipherAES {
 
+    public ECB(byte[] sectetKey) {
+        super(sectetKey);
+    }
+
     public ByteArrayOutputStream encrypt(FileInputStream inputFlow, byte[] secretKey) {
         //// TODO: 04.05.2016  
         return null;

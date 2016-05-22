@@ -31,10 +31,10 @@ public class AESDemoClass {
         }
 
         //объект класса, осуществляющего шифрование/расшифровку
-        CipherAES aes = new CipherAES();
+        CipherAES aes = new CipherAES(secretKey);
 
         //шифрование
-        byte[] cipherText = aes.encrypt(bytesOfMsg, secretKey);
+        byte[] cipherText = aes.encrypt(bytesOfMsg);
 
         //байты кодируются символами системы счисления Base64
         String encodingText = Base64.getEncoder().encodeToString(cipherText);
@@ -42,7 +42,7 @@ public class AESDemoClass {
 
         //System.out.println("\nIn order to decrypt message, enter it below:");
         //расшифровка
-        byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText), secretKey);
+        byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText));
         System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
 
 
