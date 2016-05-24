@@ -73,7 +73,6 @@ public class CipherAES {
 
         //выходной поток
         arrayOfBytes = new byte[4 * cbAES.NB * numberOfBlock]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
-        //arrayOfBytes = new byte[(int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB)))]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
 
         indexOfArray = 0;
         while (hasNextBlock()) {

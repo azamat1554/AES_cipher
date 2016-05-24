@@ -5,11 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Scanner;
 
 /**
- * Created by FamilyAccount on 20.04.2016.
+ * Класс для шифрования и расшифровки файлов
  */
 public class AESDemoFile {
     public static void main(String[] args) {
@@ -21,8 +19,7 @@ public class AESDemoFile {
 
     public static void encrypt() {
         try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file1");
-             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2");
-             Scanner input = new Scanner(System.in)) {
+             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2")) {
 
             System.out.println("\nEncrypt file.");
 
@@ -53,8 +50,7 @@ public class AESDemoFile {
 
     public static void decrypt() {
         try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2");
-             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file3");
-             Scanner input = new Scanner(System.in)) {
+             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file3")) {
 
             System.out.println("\nDecrypt file");
             //input.next(); // для остановки

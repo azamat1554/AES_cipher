@@ -124,7 +124,7 @@ public class CipherBlockAES {
     public byte[] encryptBlock(byte[] plainText) {
         mode = Mode.ENCRYPT; //encryption mode
 
-        fillState(plainText);
+        fillState(plainText); //// TODO: 23.05.2016 Передавать сразу заполненный массив, для ускорения
 
         //---------------Инициализация--------------------------
         //long start = System.currentTimeMillis();
@@ -182,16 +182,12 @@ public class CipherBlockAES {
 
     //заменяет значения в state на соответствующие из таблицы sbox
     private void subBytes() {
-        int row, column;
         for (int r = 0; r < 4; r++) {
             for (int c = 0; c < NB; c++) {
-                row = (state[r][c] & 0xf0) >> 4;
-                column = (state[r][c] & 0x0f);
-
                 if (mode == Mode.ENCRYPT)
-                    state[r][c] = (byte) sbox[16 * row + column];
+                    state[r][c] = (byte) sbox[state[r][c] & 0xff]; //16 * row + column];
                 else
-                    state[r][c] = (byte) invSbox[16 * row + column];
+                    state[r][c] = (byte) invSbox[state[r][c] & 0xff];
             }
         }
     }
@@ -232,7 +228,7 @@ public class CipherBlockAES {
 
 
     //счетчик раундов
-    int countRound = 0;
+    private int countRound = 0;
 
     /* производит операцию XOR между state и roundKey
      * roundKey получается из secretKey в методе keyExpantion внутреннего класса Key */
@@ -373,20 +369,24 @@ public class CipherBlockAES {
 
     //Выполняет умножение чисел в поле Галуа
     private byte multiply(int a, int b) {
-        int degreeA, degreeB;
-        int row, column;
+        if (a == 0x00) return 0x00;
 
-        if (a == 0x00 || b == 0x00) return 0x00;
+        int result;
+        switch (b) {
+            case 0x02:
+                if ((a & 0x80) == 0x00)
+                    result = (a << 1); //& 0xff;
+                else
+                    result = ((a << 1) ^ 0x1b);// & 0xff;
+                break;
+            case 0x03:
+                result = multiply(a, 0x02) ^ a;
+                break;
+            default:
+                result = expGF[((logGF[a & 0xff] + logGF[b]) % 255)];
+        }
 
-        row = (a & 0xf0) >> 4;
-        column = (a & 0x0f);
-        degreeA = logGF[16*row + column];
-
-        row = (b & 0xf0) >> 4;
-        column = (b & 0x0f);
-        degreeB = logGF[16*row + column];
-
-        return (byte) expGF[((degreeA + degreeB) % 255)];
+        return (byte) result;
     }
 
     //преобразует матрицу state к одномерному массиву
