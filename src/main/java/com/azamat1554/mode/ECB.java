@@ -10,19 +10,19 @@ import java.io.FileOutputStream;
 /**
  * Class implements concurrent encryption of ECB mode.
  */
-public class ECB extends CipherAES {
+public class ECB extends BlockCipher {
+//    CipherAES aes;
+//    public ECB() {
+//        aes = new CipherAES();
+//    }
 
-    public ECB(byte[] sectetKey) {
-        super(sectetKey);
+    public byte[] encrypt(byte[] plainText, int countOfByte, boolean lastChunk) {
+        //// TODO: 04.05.2016
+        return aes.encrypt(plainText, countOfByte, lastChunk);
     }
 
-    public ByteArrayOutputStream encrypt(FileInputStream inputFlow, byte[] secretKey) {
-        //// TODO: 04.05.2016  
-        return null;
-    }
-
-    public ByteArrayOutputStream decrypt(FileOutputStream inputFlow, byte[] secretKey) {
-        //// TODO: 04.05.2016  
-        return null;
+    public byte[] decrypt(byte[] plainText, int countOfByte, boolean lastChunk) {
+        //// TODO: 04.05.2016
+        return aes.decrypt(plainText, countOfByte, lastChunk);
     }
 }

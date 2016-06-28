@@ -1,58 +1,42 @@
 package com.azamat1554;
 
-import com.azamat1554.mode.ECB;
-
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.Arrays;
-
 /**
- * Этот класс принимает входной поток, делит его на блоки и отправляет на шифрование/расшифрование
+ * Этот класс принимает входной поток, делит его на блоки по 16 байт, и отправляет на шифрование/расшифрование
  * классу CipherBlockAES, который обрабатывает блок и возвращает результат. Затем все блоки снова
  * склеиваются и преобразованный входной поток возвращается в вызивающий код.
  *
  * @author Azamat Abidokov
  */
-public class CipherAES {
+public class CipherAES implements AESConst {
     //переменная класса для шифрования и расшифровки блоков
     private CipherBlockAES cbAES;
 
     //индекс на текущее положение во входном потоке байтов
     private int indexOfArray;
 
+    //индекс конца полезных данных в массиве
+    private int endOfArray;
+
+    //индекс конца данный в массиве мовле преобразований
+    private int sizeOfArray;
+
+    //последний блок?
+    private boolean lastChunk;
+
     //выходной поток байтов
     private byte[] arrayOfBytes; //outputBytes
 
-    /**
-     * Перечисление, которое содержит режимы шифрования
-     */
-    public enum Mode {
-        ECB, CBC
+    public CipherAES() {
+        cbAES = new CipherBlockAES();
     }
 
-    public CipherAES(byte[] secretKey) {
-        cbAES = new CipherBlockAES(secretKey);
+    public void setKey(byte[] secretKey) {
+        cbAES.init(secretKey);
     }
 
-    //шифрует файл на который указывает параметр inputFlow
-    public byte[] encrypt(FileInputStream inputFlow, byte[] secretKey, Mode mode) {
-        //ECB ecb = new ECB(secretKey);
-        //ecb.encrypt(inputFlow, secretKey);
-        //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
-        //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
-
-        return null;
-    }
-
-    //расшифровывает файл на который указывает параметр inputFlow
-    public byte[] decrypt(FileOutputStream inputFlow, byte[] secretKey, Mode mode) {
-        //ECB ecb = new ECB(secretKey);
-        //ecb.decrypt(inputFlow, secretKey);
-        //// TODO: 04.05.2016 если файл большой, считать часть файла и отправить на шифрование
-        //в подкласс соответствующий режиму. Затем зашифрованный массив записать в новый файл oldFile.format.encrypted
-
-        return null;
+    private void init(int endOfArray, boolean lastChunk) {
+        this.endOfArray = endOfArray;
+        this.lastChunk = lastChunk;
     }
 
     /**
@@ -61,25 +45,18 @@ public class CipherAES {
      * @param plainText Исходный (открытый) массив данных
      * @return Зашифрованный блок данных
      */
-    public byte[] encrypt(byte[] plainText) {
-        //проверка на пустой массив
-        if (plainText.length == 0) return null;
-
-        //отношение длины входного потока байтов к длине одного блока
-        double ratio = plainText.length / (4.0 * cbAES.NB);
-
-        //кол-во необходимых блоков
-        int numberOfBlock = (int) (ratio % 1 == 0 ? ratio + 1 : Math.ceil(ratio));
+    public byte[] encrypt(byte[] plainText, int endOfArray, boolean lastChunk) {
+        init(endOfArray, lastChunk);
 
         //выходной поток
-        arrayOfBytes = new byte[4 * cbAES.NB * numberOfBlock]; //Arrays.copyOf(plainText, (int) (4 * cbAES.NB * Math.ceil(plainText.length / (4.0 * cbAES.NB))));
+        sizeOfArray = setSizeOfArray();
 
         indexOfArray = 0;
         while (hasNextBlock()) {
-            append(cbAES.encryptBlock(nextBlock(plainText)));
+            append(plainText, cbAES.encryptBlock(nextBlock(plainText)));
         }
 
-        return arrayOfBytes;
+        return plainText; //arrayOfBytes;
     }
 
     /**
@@ -88,32 +65,47 @@ public class CipherAES {
      * @param cipherText Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
      * @return Расшифрованный массив данных
      */
-    public byte[] decrypt(byte[] cipherText) {
-        //проверка на пустой массив
-        if (cipherText.length == 0) return null;
+    public byte[] decrypt(byte[] cipherText, int endOfArray, boolean lastChunk) {
+        init(endOfArray, lastChunk);
 
         //входной поток
-        arrayOfBytes = new byte[cipherText.length];
+        //arrayOfBytes = new byte[cipherText.length];
 
         indexOfArray = 0;
-        int endOfArray = 0;
+        sizeOfArray = this.endOfArray;
+        int end = 0;
         while (hasNextBlock()) {
-            endOfArray = append(cbAES.decryptBlock(nextBlock(cipherText)));
+            end = append(cipherText, cbAES.decryptBlock(nextBlock(cipherText)));
         }
-
-        indexOfArray = endOfArray; //todo temp desision
-        //arrayOfBytes = Arrays.copyOf(arrayOfBytes, endOfArray);
-        return arrayOfBytes;
+        sizeOfArray = end;
+        return cipherText; //arrayOfBytes;
     }
 
-    //возвращает значение индекса, на текущее положение в массиве байтов
-    public int getIndexOfArray() {
-        return indexOfArray;
+    //возвращает значение индекса, на конец полезных данных в массиве байтов
+    public int getSizeOfArray() {
+        return sizeOfArray;
+    }
+
+    private int setSizeOfArray() {
+        int tempSize;
+        if (!lastChunk) {
+            tempSize = endOfArray;
+        } else {
+            //отношение длины входного потока байтов к длине одного блока
+            double ratio = endOfArray / (4.0 * NB);
+
+            //кол-во необходимых блоков
+            int numberOfBlock = (int) (ratio % 1 == 0 ? ratio + 1 : Math.ceil(ratio));
+
+            //выходной поток
+            tempSize = 4 * NB * numberOfBlock;
+        }
+        return tempSize;
     }
 
     //проверяет есть ли еще байты в потоке
     private boolean hasNextBlock() {
-        if (indexOfArray < arrayOfBytes.length)
+        if (indexOfArray < sizeOfArray) //arrayOfBytes.length)
             return true;
         else
             return false;
@@ -121,16 +113,16 @@ public class CipherAES {
 
     //возвращает блок байтов
     private byte[] nextBlock(byte[] streamOfBytes) {
-        byte[] block = new byte[4 * cbAES.NB];
+        byte[] block = new byte[4 * NB];
+
         for (int i = 0; i < block.length; i++) {
-            if (indexOfArray < streamOfBytes.length)
+            if (indexOfArray < endOfArray)  //streamOfBytes.length)
                 block[i] = streamOfBytes[indexOfArray];
-                //Дополнение блока
-            else if (indexOfArray == streamOfBytes.length) {
+                //Дополнение блока, если это последний блок (кусок) файла
+            else if (lastChunk && indexOfArray == endOfArray)  //streamOfBytes.length) {
                 block[i] = (byte) 0x80;
-                indexOfArray += block.length - i;
-                break;
-            }
+            else
+                block[i] = 0x00;
 
             indexOfArray++;
         }
@@ -138,17 +130,19 @@ public class CipherAES {
     }
 
     //присоединить обработанные байты в выходной массив
-    private int append(byte[] block) {
-        int end = indexOfArray - 4 * cbAES.NB;
+    private int append(byte[] streamOfBytes, byte[] block) {
+        //int end = indexOfArray - 4 * NB;
+        int end = indexOfArray - 4 * NB;
 
-        if (hasNextBlock()) {
-            for (int i = 0; i < block.length & i < arrayOfBytes.length; i++) {
-                arrayOfBytes[end++] = block[i];
+        if (!lastChunk || hasNextBlock()) { //если это не последний кусок файла
+            //или есть еще блоки данных, тогда просто добавляем
+            for (int i = 0; i < block.length; i++) {
+                streamOfBytes[end++] = block[i];
             }
-        } else {
-            for (int i = 0; i < block.length & end < arrayOfBytes.length; i++) {
+        } else { //иначе, если это последний кусок файла и последний блок данных
+            for (int i = 0; i < block.length & end < sizeOfArray; i++) {
                 if (isPadding(block, i)) break;
-                arrayOfBytes[end++] = block[i];
+                streamOfBytes[end++] = block[i];
             }
         }
         return end;

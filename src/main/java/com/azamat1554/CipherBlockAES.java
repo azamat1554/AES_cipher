@@ -8,10 +8,10 @@ import java.util.Arrays;
  *
  * @author Azamat Abidokov
  */
-public class CipherBlockAES {
-    public static final int NB = 4; //количество столбцов в массиве state
-    public static final int NK = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
-    public static final int NR = 10; //число раундов
+public class CipherBlockAES implements AESConst {
+    //public static final int NB = 4; //количество столбцов в массиве state
+    //public static final int NK = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
+    //public static final int NR = 10; //число раундов
 
     //матрица замен байтов, используется при шифровке в методе subBytes()
     private int[] sbox = {
@@ -105,15 +105,18 @@ public class CipherBlockAES {
     private byte[][] state = new byte[4][NB];
 
     //ссыка на класс для генерации раундовых ключей
-    private Key keyObj;
+    private Key keyObj = new Key();;
 
     /**
      * @param secretKey Секретный ключ для шифрования данных
      */
-    public CipherBlockAES(byte[] secretKey) {
-        keyObj = new Key(secretKey);
-        keyObj.keyExpansion();
+    public void init(byte[] secretKey) {
+        keyObj.setKey(secretKey);
+
+        //обнулить массив с ключом
+        Arrays.fill(secretKey, (byte) 0);
     }
+
 
     /**
      * Шифрует входную последовательнойть байт и возвращает рузультат.
@@ -262,12 +265,21 @@ public class CipherBlockAES {
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
         };
 
-        Key(byte[] secretKey) {
+//        Key(byte[] secretKey) {
+//            for (int r = 0; r < 4; r++) {
+//                for (int c = 0; c < NB; c++) {
+//                    keySchedule[r][c] = secretKey[r + 4 * c];
+//                }
+//            }
+//        }
+
+        void setKey(byte[] secretKey) {
             for (int r = 0; r < 4; r++) {
                 for (int c = 0; c < NB; c++) {
                     keySchedule[r][c] = secretKey[r + 4 * c];
                 }
             }
+            keyExpansion();
         }
 
         //хранит значение столбца из массива keySchedule для дальнейших преобразований

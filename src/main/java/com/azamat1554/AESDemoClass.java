@@ -31,26 +31,26 @@ public class AESDemoClass {
         }
 
         //объект класса, осуществляющего шифрование/расшифровку
-        CipherAES aes = new CipherAES(secretKey);
+        //CipherAES aes = new CipherAES(secretKey);
 
-        //шифрование
-        byte[] cipherText = aes.encrypt(bytesOfMsg);
-
-        //байты кодируются символами системы счисления Base64
-        String encodingText = Base64.getEncoder().encodeToString(cipherText);
-        System.out.println("\nEncrypted text:\n" + encodingText);
-
-        //System.out.println("\nIn order to decrypt message, enter it below:");
-        //расшифровка
-        byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText));
-        System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
-
-
-        input.close();
-        //output(cipherText);
-        //output(decryptText);
-
-        System.out.println(Arrays.equals(bytesOfMsg, decryptText));
+//        //шифрование
+//        byte[] cipherText = aes.encrypt(bytesOfMsg, true);
+//
+//        //байты кодируются символами системы счисления Base64
+//        String encodingText = Base64.getEncoder().encodeToString(cipherText);
+//        System.out.println("\nEncrypted text:\n" + encodingText);
+//
+//        System.out.println("\nIn order to decrypt message, enter it below:");
+//        //расшифровка
+//        byte[] decryptText = aes.decrypt(Base64.getDecoder().decode(encodingText), true);
+//        System.out.println("\nDecrypted text:\n" + new String(decryptText) + "\n");
+//
+//
+//        input.close();
+//        //output(cipherText);
+//        //output(decryptText);
+//
+//        System.out.println(Arrays.equals(bytesOfMsg, decryptText));
     }
 
     private static void output(byte[] array) {

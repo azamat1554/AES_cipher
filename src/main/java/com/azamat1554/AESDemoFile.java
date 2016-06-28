@@ -1,93 +1,49 @@
 package com.azamat1554;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.azamat1554.mode.Mode;
 
 /**
  * Класс для шифрования и расшифровки файлов
  */
 public class AESDemoFile {
+    private final FileHandler cipher = new FileHandler();
+
     public static void main(String[] args) {
         //long start = System.currentTimeMillis();
-        encrypt();
-        decrypt();
+        AESDemoFile aesDemoFile = new AESDemoFile();
+        //aesDemoFile.encrypt();
+        aesDemoFile.decrypt();
+
         //System.out.println((System.currentTimeMillis() - start) / 1000);
     }
 
-    public static void encrypt() {
-        try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file1");
-             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2")) {
+    public void encrypt() {
+        //использовать один и тот же массив для ключа,
+        //чтобы не оставлять данные в хипе.
+        //После использования заполнить нулями
+        final char[] key = {'l', 'o', 'l'};
 
-            System.out.println("\nEncrypt file.");
+        String fileName = "/home/azamat/Desktop/file.format";
 
-            byte[] bytesOfMsg = new byte[fin.available()];
-            fin.read(bytesOfMsg);
-
-            //System.out.println("\nEnter your secret key below (without spaces):");
-            byte[] secretKey = "key".getBytes(); //input.next().getBytes();
-
-            try {
-                MessageDigest md = MessageDigest.getInstance("MD5");
-                secretKey = md.digest(secretKey);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-
-            CipherAES aes = new CipherAES(secretKey);
-
-            long start = System.currentTimeMillis();
-            byte[] cipherText = aes.encrypt(bytesOfMsg);
-            System.out.println((System.currentTimeMillis() - start) / 1000);
-
-            fout.write(cipherText); //Base64.getEncoder().encode(cipherText));
-        } catch (IOException e) {
-            e.printStackTrace();
+        //Проверка на то, что файл уже был зашифрован.
+        if (fileName.endsWith(".encrypted")) { //todo тогда показать окно для выбора дальнейших действий
+            System.out.println("File have already been encrypted.");
+            return;
         }
+
+        cipher.encrypt(fileName, key, Mode.ECB);
     }
 
-    public static void decrypt() {
-        try (FileInputStream fin = new FileInputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file2");
-             FileOutputStream fout = new FileOutputStream("E:\\Users\\FamilyAcc\\Рабочий стол\\file3")) {
+    public void decrypt() {
+        char[] key = {'l', 'o', 'l'};
+        String fileName = "/home/azamat/Desktop/file.format.encrypted";
 
-            System.out.println("\nDecrypt file");
-            //input.next(); // для остановки
-
-            byte[] cipherText = new byte[fin.available()];
-            fin.read(cipherText);
-
-            //// TODO: 22.05.2016  
-            //читать файл кусками
-//            int offset = 0;
-//            final int length = 268_435_456;
-//            do {
-//
-//            } while (true);
-//            fin.read(cipherText, offset, length);
-
-            //cipherText = Base64.getDecoder().decode(cipherText);
-
-            //System.out.println("\nEnter your secret key below (without spaces):");
-            byte[] secretKey = "key".getBytes(); //input.next().getBytes();
-
-            try {
-                MessageDigest md = MessageDigest.getInstance("MD5");
-                secretKey = md.digest(secretKey);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-
-            CipherAES aes = new CipherAES(secretKey);
-
-            long start = System.currentTimeMillis();
-            byte[] decryptText = aes.decrypt(cipherText);
-            System.out.println((System.currentTimeMillis() - start) / 1000);
-
-            fout.write(decryptText, 0, aes.getIndexOfArray());
-        } catch (IOException e) {
-            e.printStackTrace();
+        //Проверка на то, что файл ещё не был зашифрован.
+        if (!fileName.endsWith(".encrypted")) { //todo тогда показать окно для выбора дальнейших действий
+            System.out.println("File haven't been encrypted yet");
+            return;
         }
+
+        cipher.decrypt(fileName, key, Mode.ECB);
     }
 }

@@ -1,5 +1,6 @@
 package com.azamat1554;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -15,7 +16,9 @@ public class CipherAESTest {
             0x32, 0x43, (byte) 0xf6, (byte) 0xa8,
             (byte) 0x88, 0x5a, 0x30, (byte) 0x8d,
             0x31, 0x31, (byte) 0x98, (byte) 0xa2,
-            (byte) 0xe0, 0x37, 0x07, 0x34
+            (byte) 0xe0, 0x37, 0x07, 0x34,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
     };
 
     private byte[] secretKey = {
@@ -33,15 +36,21 @@ public class CipherAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherAES cAES = new CipherAES(secretKey);
+    CipherAES cAES = new CipherAES();
+
+    @Before
+    public void init() {
+        cAES.setKey(secretKey);
+
+    }
 
     @Test
     public void testEncrypt() throws Exception {
-        assertArrayEquals(cipherBytes, cAES.encrypt(bytesOfMsg));
+        assertArrayEquals(cipherBytes, cAES.encrypt(bytesOfMsg, bytesOfMsg.length - 16, true));
     }
 
     @Test
     public void testDecrypt() throws Exception {
-        assertArrayEquals(bytesOfMsg, Arrays.copyOf(cAES.decrypt(cipherBytes), cAES.getIndexOfArray()));
+        assertArrayEquals(Arrays.copyOf(bytesOfMsg, bytesOfMsg.length - 16), Arrays.copyOf(cAES.decrypt(cipherBytes, cipherBytes.length, true), cAES.getSizeOfArray()));
     }
 }

@@ -1,5 +1,6 @@
 package com.azamat1554;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -31,7 +32,12 @@ public class CipherBlockAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherBlockAES cbAES = new CipherBlockAES(secretKey);
+    CipherBlockAES cbAES = new CipherBlockAES();
+
+    @Before
+    public void setKey() {
+        cbAES.init(secretKey);
+    }
 
     @Test
     public void testEncryptBlock() throws Exception {
