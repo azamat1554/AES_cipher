@@ -7,105 +7,106 @@ package com.azamat1554;
  *
  * @author Azamat Abidokov
  */
-public class CipherAES implements AESConst {
+public class CipherAES {
     //переменная класса для шифрования и расшифровки блоков
     private CipherBlockAES cbAES;
 
-    //индекс на текущее положение во входном потоке байтов
+    //индекс на текущее положение в потоке байтов
     private int indexOfArray;
 
-    //индекс конца полезных данных в массиве
+    //индекс конца полезных данных в массиве до преобразований
     private int endOfArray;
 
-    //индекс конца данный в массиве мовле преобразований
-    private int sizeOfArray;
+    //индекс конца данный в массиве после преобразований
+    private int lastByte;
 
-    //последний блок?
+    //последний кусок файла?
     private boolean lastChunk;
 
-    //выходной поток байтов
-    private byte[] arrayOfBytes; //outputBytes
+    //хранит текущий режим
+    private ModeOfOperating mode;
 
     public CipherAES() {
         cbAES = new CipherBlockAES();
     }
 
-    public void setKey(byte[] secretKey) {
-        cbAES.init(secretKey);
-    }
-
-    private void init(int endOfArray, boolean lastChunk) {
+    public void init(int indexOfArray, int endOfArray, boolean lastChunk, ModeOfOperating mode) {
+        this.indexOfArray = indexOfArray;
         this.endOfArray = endOfArray;
         this.lastChunk = lastChunk;
+        this.mode = mode;
+
+        lastByte = setLastByteOfArray();
     }
 
     /**
      * Шифрует входную последовательнойть байт и возвращает рузультат.
      *
-     * @param plainText Исходный (открытый) массив данных
+     * @param streamOfBytes Исходный (открытый) массив данных
      * @return Зашифрованный блок данных
      */
-    public byte[] encrypt(byte[] plainText, int endOfArray, boolean lastChunk) {
-        init(endOfArray, lastChunk);
+    public byte[] encrypt(byte[] streamOfBytes, int endOfArray, boolean lastChunk) {
+        init(0, endOfArray, lastChunk, ModeOfOperating.ENCRYPT);
 
-        //выходной поток
-        sizeOfArray = setSizeOfArray();
+        makeTransform(streamOfBytes);
 
-        indexOfArray = 0;
-        while (hasNextBlock()) {
-            append(plainText, cbAES.encryptBlock(nextBlock(plainText)));
-        }
-
-        return plainText; //arrayOfBytes;
+        return streamOfBytes;
     }
 
     /**
      * Расшифровывает входную последовательнойть байт и возвращает рузультат.
      *
-     * @param cipherText Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
+     * @param streamOfBytes Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
      * @return Расшифрованный массив данных
      */
-    public byte[] decrypt(byte[] cipherText, int endOfArray, boolean lastChunk) {
-        init(endOfArray, lastChunk);
+    public byte[] decrypt(byte[] streamOfBytes, int endOfArray, boolean lastChunk) {
+        init(0, endOfArray, lastChunk, ModeOfOperating.DECRYPT);
 
-        //входной поток
-        //arrayOfBytes = new byte[cipherText.length];
+        lastByte = makeTransform(streamOfBytes);
+        return streamOfBytes;
+    }
 
-        indexOfArray = 0;
-        sizeOfArray = this.endOfArray;
+    public int makeTransform(byte[] data) {
         int end = 0;
-        while (hasNextBlock()) {
-            end = append(cipherText, cbAES.decryptBlock(nextBlock(cipherText)));
+        if (mode == ModeOfOperating.ENCRYPT) {
+            while (hasNextBlock()) {
+                end = append(data, cbAES.encryptBlock(nextBlock(data)));
+            }
+        } else {
+            while (hasNextBlock()) {
+                end = append(data, cbAES.decryptBlock(nextBlock(data)));
+            }
         }
-        sizeOfArray = end;
-        return cipherText; //arrayOfBytes;
+        return end;
     }
 
     //возвращает значение индекса, на конец полезных данных в массиве байтов
-    public int getSizeOfArray() {
-        return sizeOfArray;
+    public int getIndexOfLastByte() {
+        return lastByte;
     }
 
-    private int setSizeOfArray() {
+    private int setLastByteOfArray() {
+        //требуемое кол-во блоков для хранения данных после шифрования/дешифрования
         int tempSize;
-        if (!lastChunk) {
+
+        if ((mode == ModeOfOperating.DECRYPT) || !lastChunk) {
             tempSize = endOfArray;
-        } else {
+        } else { //если это последний кусок файла
             //отношение длины входного потока байтов к длине одного блока
-            double ratio = endOfArray / (4.0 * NB);
+            double ratio = endOfArray / (4.0 * AESConst.NB);
 
             //кол-во необходимых блоков
             int numberOfBlock = (int) (ratio % 1 == 0 ? ratio + 1 : Math.ceil(ratio));
 
-            //выходной поток
-            tempSize = 4 * NB * numberOfBlock;
+            //необходимое кол-во байт, с учетом дополнения до блока
+            tempSize = 4 * AESConst.NB * numberOfBlock;
         }
         return tempSize;
     }
 
     //проверяет есть ли еще байты в потоке
     private boolean hasNextBlock() {
-        if (indexOfArray < sizeOfArray) //arrayOfBytes.length)
+        if (indexOfArray < lastByte)
             return true;
         else
             return false;
@@ -113,13 +114,13 @@ public class CipherAES implements AESConst {
 
     //возвращает блок байтов
     private byte[] nextBlock(byte[] streamOfBytes) {
-        byte[] block = new byte[4 * NB];
+        byte[] block = new byte[4 * AESConst.NB];
 
         for (int i = 0; i < block.length; i++) {
-            if (indexOfArray < endOfArray)  //streamOfBytes.length)
+            if (indexOfArray < endOfArray)
                 block[i] = streamOfBytes[indexOfArray];
                 //Дополнение блока, если это последний блок (кусок) файла
-            else if (lastChunk && indexOfArray == endOfArray)  //streamOfBytes.length) {
+            else if (lastChunk && indexOfArray == endOfArray)
                 block[i] = (byte) 0x80;
             else
                 block[i] = 0x00;
@@ -132,16 +133,17 @@ public class CipherAES implements AESConst {
     //присоединить обработанные байты в выходной массив
     private int append(byte[] streamOfBytes, byte[] block) {
         //int end = indexOfArray - 4 * NB;
-        int end = indexOfArray - 4 * NB;
+        int end = indexOfArray - 4 * AESConst.NB;
 
-        if (!lastChunk || hasNextBlock()) { //если это не последний кусок файла
-            //или есть еще блоки данных, тогда просто добавляем
+        //если выполняется дешифровка, это последний кусок файла и последний блок данных этого куска
+        //тогда проверить, на дополнение
+        if ((mode == ModeOfOperating.DECRYPT) && lastChunk && !hasNextBlock()) {
             for (int i = 0; i < block.length; i++) {
+                if (isPadding(block, i)) break;
                 streamOfBytes[end++] = block[i];
             }
-        } else { //иначе, если это последний кусок файла и последний блок данных
-            for (int i = 0; i < block.length & end < sizeOfArray; i++) {
-                if (isPadding(block, i)) break;
+        } else {
+            for (int i = 0; i < block.length; i++) {
                 streamOfBytes[end++] = block[i];
             }
         }

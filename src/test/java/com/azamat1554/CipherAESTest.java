@@ -40,7 +40,8 @@ public class CipherAESTest {
 
     @Before
     public void init() {
-        cAES.setKey(secretKey);
+        //cAES.setKey(secretKey);
+        CipherBlockAES.Key.setKey(secretKey);
 
     }
 
@@ -51,6 +52,6 @@ public class CipherAESTest {
 
     @Test
     public void testDecrypt() throws Exception {
-        assertArrayEquals(Arrays.copyOf(bytesOfMsg, bytesOfMsg.length - 16), Arrays.copyOf(cAES.decrypt(cipherBytes, cipherBytes.length, true), cAES.getSizeOfArray()));
+        assertArrayEquals(Arrays.copyOf(bytesOfMsg, bytesOfMsg.length - 16), Arrays.copyOf(cAES.decrypt(cipherBytes, cipherBytes.length, true), cAES.getIndexOfLastByte()));
     }
 }

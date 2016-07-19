@@ -36,7 +36,8 @@ public class CipherBlockAESTest {
 
     @Before
     public void setKey() {
-        cbAES.init(secretKey);
+        //cbAES.init(secretKey);
+        CipherBlockAES.Key.setKey(secretKey);
     }
 
     @Test

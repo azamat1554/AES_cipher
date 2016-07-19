@@ -1,6 +1,9 @@
 package com.azamat1554.mode;
 
+import com.azamat1554.AESConst;
 import com.azamat1554.CipherAES;
+import com.azamat1554.CipherBlockAES;
+import com.azamat1554.ModeOfOperating;
 
 /**
  * Общий класс для всех методов шифрования,
@@ -8,21 +11,16 @@ import com.azamat1554.CipherAES;
  * того, чтобы в операторе swich использовать
  * одну ссылку на все подклассы. говнокод-костыль.
  */
-public abstract class BlockCipher { //todo возможно, имеет смысл переделать в интерфейс
-    protected CipherAES aes = new CipherAES();
-
-    public void setKey(byte[] secretKey) {
-        aes.setKey(secretKey);
-    }
-
-    //возвращает значение индекса, на конец полезных данных в массиве байтов
-    public int getSizeOfArray() {
-        return aes.getSizeOfArray();
-    }
-
+public interface BlockCipher { //todo возможно, имеет смысл переделать в абстрактный класс
     //шифрует данные
-    public abstract byte[] encrypt(byte[] bytesOfMsg, int countOfByte, boolean lastChunk);
+    //byte[] encrypt(byte[] bytesOfMsg, int countOfByte, boolean lastChunk);
 
     //расшифровывает данные
-    public abstract byte[] decrypt(byte[] bytesOfMsg, int countOfByte, boolean lastChunk);
+    //byte[] decrypt(byte[] bytesOfMsg, int countOfByte, boolean lastChunk);
+
+
+    int update(byte[] streamOfBytes, int endOfArray, boolean last, ModeOfOperating mode);
+
+    //возвращает индекс последнего байта данных
+    //int getIndexOfLastByte();
 }

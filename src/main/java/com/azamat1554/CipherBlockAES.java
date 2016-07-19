@@ -8,13 +8,9 @@ import java.util.Arrays;
  *
  * @author Azamat Abidokov
  */
-public class CipherBlockAES implements AESConst {
-    //public static final int NB = 4; //количество столбцов в массиве state
-    //public static final int NK = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
-    //public static final int NR = 10; //число раундов
-
+public class CipherBlockAES {
     //матрица замен байтов, используется при шифровке в методе subBytes()
-    private int[] sbox = {
+    private static int[] sbox = {
             0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
             0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
             0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -34,7 +30,7 @@ public class CipherBlockAES implements AESConst {
     };
 
     //матрица замен байтов, используется при расшифровке в методе subBytes()
-    private int[] invSbox = {
+    private static int[] invSbox = {
             0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
             0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
             0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
@@ -54,7 +50,7 @@ public class CipherBlockAES implements AESConst {
     };
 
     //матриза замен степеней числа 3, на соответствующие им числа в поле Галуа
-    private int[] expGF = {
+    private static int[] expGF = {
             0x01, 0x03, 0x05, 0x0f, 0x11, 0x33, 0x55, 0xff, 0x1a, 0x2e, 0x72, 0x96, 0xa1, 0xf8, 0x13, 0x35,
             0x5f, 0xe1, 0x38, 0x48, 0xd8, 0x73, 0x95, 0xa4, 0xf7, 0x02, 0x06, 0x0a, 0x1e, 0x22, 0x66, 0xaa,
             0xe5, 0x34, 0x5c, 0xe4, 0x37, 0x59, 0xeb, 0x26, 0x6a, 0xbe, 0xd9, 0x70, 0x90, 0xab, 0xe6, 0x31,
@@ -74,7 +70,7 @@ public class CipherBlockAES implements AESConst {
     };
 
     //матриза замен чисел, на соответствующие им степени 3 в поле Галуа
-    private int[] logGF = {
+    private static int[] logGF = {
             0x00, 0x00, 0x19, 0x01, 0x32, 0x02, 0x1a, 0xc6, 0x4b, 0xc7, 0x1b, 0x68, 0x33, 0xee, 0xdf, 0x03,
             0x64, 0x04, 0xe0, 0x0e, 0x34, 0x8d, 0x81, 0xef, 0x4c, 0x71, 0x08, 0xc8, 0xf8, 0x69, 0x1c, 0xc1,
             0x7d, 0xc2, 0x1d, 0xb5, 0xf9, 0xb9, 0x27, 0x6a, 0x4d, 0xe4, 0xa6, 0x72, 0x9a, 0xc9, 0x09, 0x78,
@@ -102,21 +98,7 @@ public class CipherBlockAES implements AESConst {
     private Mode mode;
 
     //матрица над которой будут производиться преобразования
-    private byte[][] state = new byte[4][NB];
-
-    //ссыка на класс для генерации раундовых ключей
-    private Key keyObj = new Key();;
-
-    /**
-     * @param secretKey Секретный ключ для шифрования данных
-     */
-    public void init(byte[] secretKey) {
-        keyObj.setKey(secretKey);
-
-        //обнулить массив с ключом
-        Arrays.fill(secretKey, (byte) 0);
-    }
-
+    private byte[][] state = new byte[4][AESConst.NB];
 
     /**
      * Шифрует входную последовательнойть байт и возвращает рузультат.
@@ -130,11 +112,10 @@ public class CipherBlockAES implements AESConst {
         fillState(plainText); //// TODO: 23.05.2016 Передавать сразу заполненный массив, для ускорения
 
         //---------------Инициализация--------------------------
-        //long start = System.currentTimeMillis();
         addRoundKey();
 
         //----------------nr-1 раундов--------------------------
-        for (int i = 0; i < NR - 1; i++) {
+        for (int i = 0; i < AESConst.NR - 1; i++) {
             subBytes();
             shiftRows();
             mixColumns();
@@ -164,7 +145,7 @@ public class CipherBlockAES implements AESConst {
         addRoundKey();
 
         //----------------nr-1 раундов--------------------------
-        for (int i = NR - 1; i > 0; i--) {
+        for (int i = AESConst.NR - 1; i > 0; i--) {
             shiftRows();
             subBytes();
             addRoundKey();
@@ -186,7 +167,7 @@ public class CipherBlockAES implements AESConst {
     //заменяет значения в state на соответствующие из таблицы sbox
     private void subBytes() {
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < NB; c++) {
+            for (int c = 0; c < AESConst.NB; c++) {
                 if (mode == Mode.ENCRYPT)
                     state[r][c] = (byte) sbox[state[r][c] & 0xff]; //16 * row + column];
                 else
@@ -209,7 +190,7 @@ public class CipherBlockAES implements AESConst {
      * умножение производится по правилам умножения в поле Галуа (GF) */
     private void mixColumns() {
         byte s0, s1, s2, s3;
-        for (int c = 0; c < NB; c++) {
+        for (int c = 0; c < AESConst.NB; c++) {
             if (mode == Mode.ENCRYPT) {
                 s0 = (byte) (multiply(state[0][c], 0x02) ^ multiply(state[1][c], 0x03) ^ state[2][c] ^ state[3][c]);
                 s1 = (byte) (state[0][c] ^ multiply(state[1][c], 0x02) ^ multiply(state[2][c], 0x03) ^ state[3][c]);
@@ -238,14 +219,16 @@ public class CipherBlockAES implements AESConst {
     private void addRoundKey() {
         byte[][] roundKey;
         if (mode == Mode.ENCRYPT) {
-            roundKey = keyObj.getRoundKey(countRound++);
+            //roundKey = keyObj.getRoundKey(countRound++);
+            roundKey = Key.getRoundKey(countRound++);
         } else {
-            roundKey = keyObj.getRoundKey((NR - countRound++));
+            //roundKey = keyObj.getRoundKey((NR - countRound++));
+            roundKey = Key.getRoundKey((AESConst.NR - countRound++));
         }
 
         if (countRound == 11) countRound = 0;
 
-        for (int c = 0; c < NB; c++) {
+        for (int c = 0; c < AESConst.NB; c++) {
             for (int r = 0; r < 4; r++) {
                 state[r][c] = (byte) (state[r][c] ^ roundKey[r][c]);
             }
@@ -253,59 +236,54 @@ public class CipherBlockAES implements AESConst {
     }
 
     //Внутренний класс, генерирует раундовые ключи
-    private class Key {
+    public static class Key {
         //храниц все ключи для всех рауднов
-        byte[][] keySchedule = new byte[4][NB * (NR + 1)]; //матрица раудовых ключей
+        static byte[][] keySchedule = new byte[4][AESConst.NB * (AESConst.NR + 1)]; //матрица раудовых ключей
 
         //используется для столбцов номера которых кратны nk
-        int[][] rcon = {
+        static int[][] rcon = {
                 {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
         };
 
-//        Key(byte[] secretKey) {
-//            for (int r = 0; r < 4; r++) {
-//                for (int c = 0; c < NB; c++) {
-//                    keySchedule[r][c] = secretKey[r + 4 * c];
-//                }
-//            }
-//        }
-
-        void setKey(byte[] secretKey) {
+        public static void setKey(byte[] secretKey) {
             for (int r = 0; r < 4; r++) {
-                for (int c = 0; c < NB; c++) {
+                for (int c = 0; c < AESConst.NB; c++) {
                     keySchedule[r][c] = secretKey[r + 4 * c];
                 }
             }
             keyExpansion();
+
+            //обнулить массив с ключом
+            Arrays.fill(secretKey, (byte) 0);
         }
 
         //хранит значение столбца из массива keySchedule для дальнейших преобразований
-        byte[] temp = new byte[4];
+        static byte[] temp = new byte[4];
 
         //генерирует все раундовые ключи на основе начального ключа secretKey (передается в конструктор)
-        void keyExpansion() {
+        static void keyExpansion() {
             // index - указатель на текущий столбец
-            for (int index = NK; index < keySchedule[0].length; index++) {
-                if (index % NK == 0) {
+            for (int index = AESConst.NK; index < keySchedule[0].length; index++) {
+                if (index % AESConst.NK == 0) {
                     temp = getColumn(index - 1); //возвращяет предыдущий столбец таблицы keySchedule
                     rotWord(); //сдвиг на один элемент
                     subWord(); //замена байтов значениями из таллицы sbox
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = (byte) (temp[r] ^ keySchedule[r][index - NK] ^ rcon[r][index / NK - 1]);
+                        keySchedule[r][index] = (byte) (temp[r] ^ keySchedule[r][index - AESConst.NK] ^ rcon[r][index / AESConst.NK - 1]);
                     }
                 } else {
                     for (int r = 0; r < 4; r++) {
-                        keySchedule[r][index] = (byte) (keySchedule[r][index - 1] ^ keySchedule[r][index - NK]);
+                        keySchedule[r][index] = (byte) (keySchedule[r][index - 1] ^ keySchedule[r][index - AESConst.NK]);
                     }
                 }
             }
         }
 
         //восвращает столбец под указанным номером (индексом)
-        byte[] getColumn(int index) {
+        static byte[] getColumn(int index) {
             byte[] column = new byte[4];
             for (int i = 0; i < 4; i++) {
                 column[i] = keySchedule[i][index];
@@ -314,22 +292,30 @@ public class CipherBlockAES implements AESConst {
         }
 
         //возвращает раундовый ключ roundKey
-        byte[][] getRoundKey(int startColumn) {
-            byte[][] block = new byte[4][NB];
+        static byte[][] getRoundKey(int startColumn) {
+            byte[][] block = new byte[4][AESConst.NB];
             for (int r = 0; r < 4; r++)
-                for (int c = 0; c < NK; c++)
-                    block[r][c] = keySchedule[r][startColumn * NB + c];
+                for (int c = 0; c < AESConst.NK; c++)
+                    block[r][c] = keySchedule[r][startColumn * AESConst.NB + c];
 
             return block;
         }
 
         //осуществляет сдвиг элементов массива temp влево на один элемент
-        void rotWord() {
-            shiftArray(temp, -1);
+        static void rotWord() {
+            //shiftArray(temp, -1);
+
+            int length = temp.length;
+
+            byte item = temp[0];
+            for (int i = 1; i < length; i++) {
+                temp[i - 1] = temp[i];
+            }
+            temp[length -1] = item;
         }
 
         //заменяет элементы массива temp на соответствующие из таблицы sbox
-        void subWord() {
+        static void subWord() {
             int row, column;
             for (int r = 0; r < 4; r++) {
                 row = (temp[r] & 0xf0) >> 4;
@@ -347,7 +333,7 @@ public class CipherBlockAES implements AESConst {
     //заносит массив, переданный методам encrypt()/decrypt() в массив state[][]
     private void fillState(byte[] bytes) {
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < NB; c++) {
+            for (int c = 0; c < AESConst.NB; c++) {
                 state[r][c] = bytes[r + 4 * c];
             }
         }
@@ -403,9 +389,9 @@ public class CipherBlockAES implements AESConst {
 
     //преобразует матрицу state к одномерному массиву
     private byte[] output() {
-        byte[] outArr = new byte[4 * NB];
+        byte[] outArr = new byte[4 * AESConst.NB];
         for (int r = 0; r < 4; r++) {
-            for (int c = 0; c < NB; c++) {
+            for (int c = 0; c < AESConst.NB; c++) {
                 outArr[r + 4 * c] = state[r][c];
             }
         }
