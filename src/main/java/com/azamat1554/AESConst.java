@@ -8,4 +8,6 @@ public final class AESConst {
     public static final int NB = 4; //количество столбцов в массиве state
     public static final int NK = 4; //число 32-битных слов в ключе, в данном случае 128-битный ключ
     public static final int NR = 10; //число раундов
+
+    public static final int BLOCK_SIZE = 4 * NB; //размер одного блока данных
 }

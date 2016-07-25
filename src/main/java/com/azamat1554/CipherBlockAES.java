@@ -109,7 +109,7 @@ public class CipherBlockAES {
     public byte[] encryptBlock(byte[] plainText) {
         mode = Mode.ENCRYPT; //encryption mode
 
-        fillState(plainText); //// TODO: 23.05.2016 Передавать сразу заполненный массив, для ускорения
+        fillState(plainText);
 
         //---------------Инициализация--------------------------
         addRoundKey();

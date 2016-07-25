@@ -9,55 +9,10 @@ import java.util.concurrent.RecursiveAction;
  * Class implements concurrent encryption of ECB mode.
  */
 public class ECB extends RecursiveAction implements BlockCipher {
-//    private ModeOfOperating mode;
-//
-//    private int lastByte;
-//
-//    /**
-//     * Шифрует входную последовательнойть байт и возвращает рузультат.
-//     *
-//     * @param streamOfBytes Исходный (открытый) массив данных
-//     * @return Зашифрованный блок данных
-//     */
-//    public byte[] encrypt(byte[] streamOfBytes, int endOfArray, boolean lastChunk) {
-//        mode = ModeOfOperating.ENCRYPT;
-//
-//        //придумать нормальное решение
-//        if (!lastChunk) lastByte = endOfArray;
-//
-//        ParallelExecution pe = new ParallelExecution(streamOfBytes, 0, endOfArray, lastChunk);
-//        pe.invoke();
-//
-//        return streamOfBytes;
-//    }
-//
-//    /**
-//     * Расшифровывает входную последовательнойть байт и возвращает рузультат.
-//     *
-//     * @param streamOfBytes Массив хранящий зашифрованные байты, в методе <code>encrypt()</code>
-//     * @return Расшифрованный массив данных
-//     */
-//    public byte[] decrypt(byte[] streamOfBytes, int endOfArray, boolean lastChunk) {
-//        mode = ModeOfOperating.DECRYPT;
-//
-//        //придумать нормальное решение
-//        if (!lastChunk) lastByte = endOfArray;
-//
-//        ParallelExecution pe = new ParallelExecution(streamOfBytes, 0, endOfArray, lastChunk);
-//        pe.invoke();
-//
-//        return streamOfBytes;
-//    }
-//
-//    public int getIndexOfLastByte() {
-//        //System.out.println("\n lastByte: " + lastByte);
-//        return lastByte;
-//
-//    }
+    static final int THRESHOLD = 2048;
 
-    //private class ParallelExecution extends RecursiveAction {
-
-    static final int THRESHOLD = 65536;
+    //массив с данными
+    private static byte[] data;
 
     private static int lastByte;
 
@@ -65,65 +20,72 @@ public class ECB extends RecursiveAction implements BlockCipher {
 
     /*класс осуществляющий разбиение на блоки для шифрования/расшифрования,
       а затем обратно объединение */
-    CipherAES cipher;
+    private CipherAES cipher;
 
-    //последний кусок файла?
-    boolean lastChunk;
+    //указывает, последний это кусок файла или нет
+    private boolean lastChunk;
 
-    byte[] data;
-
-    int start, end;
+    //from - индекс начала диапазона, to - индекс конца диапазона
+    private int from, to;
 
     //конструктор по умолчанию
-    public ECB() {
-        cipher = new CipherAES();
-    }
+    public ECB() {}
 
     private ECB(byte[] d, int s, int e, boolean last) {
-        cipher = new CipherAES();
-
         data = d;
-        start = s;
-        end = e;
+        from = s;
+        to = e;
         lastChunk = last;
     }
 
+    /**
+     * Выполняет инициализацию объекта, замем запускает задачу на рекурсивное выполнение.
+     *
+     * @param streamOfBytes Массив хранящий данные, которые нужно преобразовать
+     * @param endOfArray    Индекс конца полезных данных в массиве до преобразований
+     * @param last          Указывает, последний это кусок файла или нет
+     * @param mode          Хранит текущий режим работы
+     * @return Индекс на конец полезных данных после преобразований
+     */
     public int update(byte[] streamOfBytes, int endOfArray, boolean last, ModeOfOperating mode) {
         this.mode = mode;
+        lastByte = endOfArray;
 
         data = streamOfBytes;
-        start = 0;
-        end = endOfArray;
-        lastByte = endOfArray;
+        from = 0;
+        to = endOfArray;
         lastChunk = last;
         this.invoke();
 
         return lastByte;
     }
 
+    /**
+     * В этом методе выполняется разделение больших данных до
+     * указанного порога, после чего выполняется параллельная обработка
+     * этих данных по частям.
+     */
     @Override
     protected void compute() {
-        if ((end - start) <= THRESHOLD) {
-            cipher.init(start, end, lastChunk, mode);
-            int index = cipher.makeTransform(data);
+        if ((to - from) <= THRESHOLD) {
+            cipher = new CipherAES();
+            cipher.init(data, from, to, lastChunk, mode);
+            int index = cipher.makeTransform();
 
             //если полседний блок будет обработан не в последнюю очередь
-            if (lastChunk)
-                lastByte = index;
-
-            //System.out.println("compute method, s: " + start + " e: " + end);
+            if (lastChunk) lastByte = index;
         } else {
             int bound;
             if (!lastChunk) {  //если это не последний кусок файла, тогда делим на два
-                bound = (start + end) / 2;
+                bound = (from + to) / 2;
 
-                invokeAll(new ECB(data, start, bound, false),
-                        new ECB(data, bound, end, false));
+                invokeAll(new ECB(data, from, bound, false),
+                        new ECB(data, bound, to, false));
             } else { //иначе, находим максимальную степень двойки, которая будет разделителем
-                bound = getUpperBound(start, end);
+                bound = getUpperBound(from, to);
 
-                invokeAll(new ECB(data, start, bound, false),
-                        new ECB(data, bound, end, true));
+                invokeAll(new ECB(data, from, bound, false),
+                        new ECB(data, bound, to, true));
             }
         }
     }
@@ -137,11 +99,10 @@ public class ECB extends RecursiveAction implements BlockCipher {
 
         for (int i = powerOfTwo.length - 1; i >= 0; i--) {
             if (powerOfTwo[i] < amount) {
-                amount = start + powerOfTwo[i];
+                amount = from + powerOfTwo[i];
                 break;
             }
         }
         return amount;
     }
-    // }
 }

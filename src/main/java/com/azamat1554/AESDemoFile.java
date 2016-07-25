@@ -10,6 +10,8 @@ import java.util.Arrays;
 public class AESDemoFile {
     private final FileHandler cipher = new FileHandler();
 
+    private final Mode mode = Mode.ECB;
+
     public static void main(String[] args) {
         long start;
         AESDemoFile aesDemoFile = new AESDemoFile();
@@ -40,7 +42,7 @@ public class AESDemoFile {
         }
 
 
-        cipher.encrypt(fileName, Arrays.copyOf(key, key.length), Mode.ECB);
+        cipher.encrypt(fileName, Arrays.copyOf(key, key.length), mode);
     }
 
     public void decrypt(char[] key) {
@@ -53,6 +55,6 @@ public class AESDemoFile {
 //            return;
 //        }
 
-        cipher.decrypt(fileName, Arrays.copyOf(key, key.length), Mode.ECB);
+        cipher.decrypt(fileName, Arrays.copyOf(key, key.length), mode);
     }
 }

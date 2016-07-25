@@ -47,11 +47,21 @@ public class CipherAESTest {
 
     @Test
     public void testEncrypt() throws Exception {
-        assertArrayEquals(cipherBytes, cAES.encrypt(bytesOfMsg, bytesOfMsg.length - 16, true));
+        cAES.init(bytesOfMsg, 0, bytesOfMsg.length - 16, true, ModeOfOperating.ENCRYPT);
+
+        cAES.makeTransform();
+
+        //сравнивает с ожидаемым результатом
+        assertArrayEquals(cipherBytes, bytesOfMsg);
     }
 
     @Test
     public void testDecrypt() throws Exception {
-        assertArrayEquals(Arrays.copyOf(bytesOfMsg, bytesOfMsg.length - 16), Arrays.copyOf(cAES.decrypt(cipherBytes, cipherBytes.length, true), cAES.getIndexOfLastByte()));
+        cAES.init(cipherBytes, 0, cipherBytes.length, true, ModeOfOperating.DECRYPT);
+
+        int lastByte = cAES.makeTransform();
+
+        //сравнивает с ожидаемым результатом
+        assertArrayEquals(Arrays.copyOf(bytesOfMsg, bytesOfMsg.length - 16), Arrays.copyOf(cipherBytes, lastByte));
     }
 }
