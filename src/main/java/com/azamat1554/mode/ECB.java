@@ -9,7 +9,7 @@ import java.util.concurrent.RecursiveAction;
  * Class implements concurrent encryption of ECB mode.
  */
 public class ECB extends RecursiveAction implements BlockCipher {
-    static final int THRESHOLD = 2048;
+    private static final int THRESHOLD = 2048;
 
     //массив с данными
     private static byte[] data;
@@ -19,7 +19,7 @@ public class ECB extends RecursiveAction implements BlockCipher {
     private static ModeOfOperating mode;
 
     /*класс осуществляющий разбиение на блоки для шифрования/расшифрования,
-      а затем обратно объединение */
+      а затем объединение блоков обратно*/
     private CipherAES cipher;
 
     //указывает, последний это кусок файла или нет
@@ -48,7 +48,7 @@ public class ECB extends RecursiveAction implements BlockCipher {
      * @return Индекс на конец полезных данных после преобразований
      */
     public int update(byte[] streamOfBytes, int endOfArray, boolean last, ModeOfOperating mode) {
-        this.mode = mode;
+        ECB.mode = mode;
         lastByte = endOfArray;
 
         data = streamOfBytes;

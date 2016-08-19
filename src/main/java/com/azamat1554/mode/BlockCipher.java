@@ -10,6 +10,8 @@ import java.security.SecureRandom;
  * всеми классами выполняющими различные режими
  * шифрования.
  */
+
+//// TODO: 8/19/16 сделать анонимный класс и перенести методы из MainWindow 
 public interface BlockCipher {
 
     int update(byte[] streamOfBytes, int endOfArray, boolean last, ModeOfOperating mode);

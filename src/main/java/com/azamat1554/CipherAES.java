@@ -1,9 +1,9 @@
 package com.azamat1554;
 
 /**
- * Этот класс принимает входной поток, делит его на блоки по 16 байт, и отправляет на шифрование/расшифрование
- * классу CipherBlockAES, который обрабатывает блок и возвращает результат. Затем все блоки снова
- * склеиваются и преобразованный входной поток возвращается в вызивающий код.
+ * Этот класс принимает входной поток, делит его на блоки по 16 байт (если последний блок меньше 16 байт выполняется дополнение),
+ * и отправляет на шифрование/расшифрование классу CipherBlockAES, который обрабатывает блок и возвращает результат.
+ * Затем все блоки снова склеиваются, и преобразованный входной поток возвращается в вызывающий код.
  *
  * @author Azamat Abidokov
  */
@@ -43,11 +43,12 @@ public class CipherAES {
      * @param mode         Хранит текущий режим работы
      */
     public void init(byte[] data, int indexOfArray, int endOfArray, boolean lastChunk, ModeOfOperating mode) {
-        this.data = data;
+        CipherAES.data = data;
+        CipherAES.mode = mode;
+
         this.indexOfArray = indexOfArray;
         this.endOfArray = endOfArray;
         this.lastChunk = lastChunk;
-        this.mode = mode;
     }
 
     //Возвращает индекс конца полезных данных в массиве после выполнения дополнения
@@ -70,12 +71,16 @@ public class CipherAES {
      *
      * @return Индекс на конец полезных данных после преобразований
      */
-    public int makeTransform() { //byte[] data) {
+    //// TODO: 7/25/16 Для того чтобы удовлетворить перфекциониста внутри себя
+    //объявить этот метод как абстастный, а реализацию перенести в ECB.
+    //Что приведет к единообразию для разных режимов обработки.
+    public int makeTransform() {
         int end = 0;
         if (mode == ModeOfOperating.ENCRYPT) {
 
             endWithPadding = getSizeWithPadding();
 
+            //todo понять замем я добавил второе условие
             while (hasNextBlock() || (indexOfArray < endWithPadding)) {
                 end = appendBlock(cbAES.encryptBlock(nextBlock()), indexOfArray - AESConst.BLOCK_SIZE);
             }
@@ -89,20 +94,17 @@ public class CipherAES {
 
     //проверяет есть ли еще байты в потоке
     protected boolean hasNextBlock() {
-        if (indexOfArray < endOfArray)
-            return true;
-        else
-            return false;
+        return indexOfArray < endOfArray;
     }
 
     //возвращает блок байтов
-    protected byte[] nextBlock() { //byte[] data) {
+    protected byte[] nextBlock() {
         byte[] block = new byte[AESConst.BLOCK_SIZE];
 
         for (int i = 0; i < AESConst.BLOCK_SIZE; i++) {
             if (indexOfArray < endOfArray)
                 block[i] = data[indexOfArray];
-                //Дополнение блока, если это последний блок (кусок) файла
+                //Дополнение блока, если это последний кусок файла
             else if (lastChunk && indexOfArray == endOfArray)
                 block[i] = (byte) 0x80;
             else
@@ -113,49 +115,8 @@ public class CipherAES {
         return block;
     }
 
-//    //возвращает блок байтов
-//    private byte[][] nextBlock(byte[] streamOfBytes) {
-//        byte[][] block = new byte[4][AESConst.NB];
-//
-//        for (int c = 0; c < AESConst.NB; c++) {
-//            for (int r = 0; r < 4; r++) {
-//                if (indexOfArray < endOfArray)
-//                    block[r][c] = streamOfBytes[indexOfArray];
-//                    //Дополнение блока, если это последний блок (кусок) файла
-//                else if (lastChunk && indexOfArray == endOfArray)
-//                    block[r][c] = (byte) 0x80;
-//                else
-//                    block[r][c] = 0x00;
-//
-//                indexOfArray++;
-//            }
-//        }
-//
-//        return block;
-//    }
-
-    //присоединить обработанные байты в выходной массив
-//    protected int appendBlock(byte[] block) {//byte[] data, byte[] block) {
-//        int end = indexOfArray - AESConst.BLOCK_SIZE;
-//
-//        //если выполняется дешифровка, это последний кусок файла и последний блок данных этого куска
-//        //тогда проверить, на дополнение
-//        if ((mode == ModeOfOperating.DECRYPT) && lastChunk && !hasNextBlock()) {
-//            for (int i = 0; i < AESConst.BLOCK_SIZE; i++) {
-//                if (isPadding(block, i)) break;
-//                data[end++] = block[i];
-//            }
-//        } else {
-//            for (int i = 0; i < AESConst.BLOCK_SIZE; i++) {
-//                data[end++] = block[i];
-//            }
-//        }
-//        return end;
-//    }
     protected int appendBlock(byte[] block, int position) {//byte[] data, byte[] block) {
-        //int end = indexOfArray - AESConst.BLOCK_SIZE;
-
-        //если выполняется дешифровка, это последний кусок файла и последний блок данных этого куска
+        //при дешифровке, если это последний кусок файла и последний блок данных этого куска
         //тогда проверить, на дополнение
         if ((mode == ModeOfOperating.DECRYPT) && lastChunk && !hasNextBlock()) {
             for (int i = 0; i < AESConst.BLOCK_SIZE; i++) {

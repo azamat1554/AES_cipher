@@ -5,7 +5,7 @@ import com.azamat1554.CipherAES;
 import com.azamat1554.ModeOfOperating;
 
 /**
- * Created by FamilyAccount on 07.06.2016.
+ * Class implements encryption of CBC mode.
  */
 public class CBC extends CipherAES implements BlockCipher {
     private static int lastByte;
@@ -15,16 +15,13 @@ public class CBC extends CipherAES implements BlockCipher {
 
     private int offset;
 
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
     @Override
     public int update(byte[] streamOfBytes, int endOfArray, boolean last, ModeOfOperating mode) {
         init(streamOfBytes, 0, endOfArray, last, mode);
 
         offset = 0;
-        //получить вектор инициализации
+
+        //получить вектор инициализации из первого блока данных
         if (feedBack == null) {
             feedBack = nextBlock();
             offset = AESConst.BLOCK_SIZE;

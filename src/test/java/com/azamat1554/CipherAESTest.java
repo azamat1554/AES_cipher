@@ -8,7 +8,7 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 /**
- * Created by FamilyAccount on 20.04.2016.
+ * Testing of CipherAES class
  */
 public class CipherAESTest {
     //plain (original) bytes
@@ -36,13 +36,11 @@ public class CipherAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherAES cAES = new CipherAES();
+    private CipherAES cAES = new CipherAES();
 
     @Before
     public void init() {
-        //cAES.setKey(secretKey);
         CipherBlockAES.Key.setKey(secretKey);
-
     }
 
     @Test
