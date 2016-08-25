@@ -32,15 +32,8 @@ public class TextHandlerTest {
     }
 
     @Test
-    public void encrypt() throws Exception {
-        String s =  th.encrypt("encrypt", new CBC(), Mode.CBC, iv);
-        assertEquals("L/L+PDm4FeBnxaUwLV3FboxmPa9fNYQLPmbBUkvS1Z4=", th.encrypt("encrypt", new CBC(), Mode.CBC, iv));
+    public void encryptAndDecryptTest() throws Exception {
+        assertEquals("encrypt", th.decrypt(th.encrypt("encrypt", Mode.CBC), Mode.CBC));
 
     }
-
-    @Test
-    public void decrypt() throws Exception {
-        assertEquals("encrypt", th.decrypt("L/L+PDm4FeBnxaUwLV3FboxmPa9fNYQLPmbBUkvS1Z4=", new CBC()));
-    }
-
 }

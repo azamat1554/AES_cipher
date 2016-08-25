@@ -215,7 +215,7 @@ public class CipherBlockAES {
     private int countRound = 0;
 
     /* производит операцию XOR между state и roundKey
-     * roundKey получается из secretKey в методе keyExpantion внутреннего класса Key */
+     * roundKey получается из secretKey в методе keyExpansion внутреннего класса Key */
     private void addRoundKey() {
         byte[][] roundKey;
         if (mode == Mode.ENCRYPT) {

@@ -19,10 +19,7 @@ public class MainWindow extends JFrame {
     private final FileHandler fileHandler = new FileHandler();
     private final TextHandler textHandler = new TextHandler();
 
-    private Mode mode = Mode.CBC;
-
-    //вектор инициализации
-    private byte[] iv;
+    private Mode mode = Mode.ECB;
 
     private MainWindow() {
         super("AES encryption");
@@ -44,8 +41,6 @@ public class MainWindow extends JFrame {
 
     private class TextPanel extends JPanel {
         JLabel keyLbl;
-        JLabel ivLbl;
-        JTextField ivFld;
         JPasswordField passFld;
         JButton showHideBtn;
         JTextField initVector;
@@ -60,9 +55,6 @@ public class MainWindow extends JFrame {
             keyLbl = new JLabel(" Key: ", SwingConstants.CENTER);
             passFld = new JPasswordField();
             showHideBtn = new JButton(new ImageIcon("src/main/resources/images/eye_open.png"));
-
-            ivLbl = new JLabel(" IV: ", SwingConstants.CENTER);
-            ivFld = new JTextField();
 
             initVector = new JTextField();
             modesCBox = new JComboBox<>(Mode.values());
@@ -90,18 +82,12 @@ public class MainWindow extends JFrame {
             Font font = new Font("Arial", Font.PLAIN, 16);
             keyLbl.setFont(font);
             passFld.setFont(font);
-            ivLbl.setFont(font);
-            ivFld.setFont(font);
             modesCBox.setFont(font);
             encryptBtn.setFont(font);
             decryptBtn.setFont(font);
 
             showHideBtn.setPreferredSize(new Dimension(25, 25));
             showHideBtn.setMaximumSize(new Dimension(25, 25));
-
-            ivLbl.setVisible(false);
-            ivFld.setVisible(false);
-            ivFld.setEditable(false);
         }
 
         private void configuredLayoutManagerAndAddComponents() {
@@ -127,15 +113,6 @@ public class MainWindow extends JFrame {
             gbc.gridy = 0;
             gbc.gridwidth = 1;
             add(showHideBtn, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            add(ivLbl, gbc);
-
-            gbc.gridx = 1;
-            gbc.gridy = 1;
-            gbc.gridwidth = 4;
-            add(ivFld, gbc);
 
             gbc.weightx = 1;
             gbc.weighty = 1;
@@ -196,8 +173,7 @@ public class MainWindow extends JFrame {
                     return;
                 }
 
-                //// TODO: 8/19/16 удалить getCipher, оставить только режим
-                cipherText.setText(textHandler.encrypt(plainText.getText(), getCipher(mode), mode, iv));
+                cipherText.setText(textHandler.encrypt(plainText.getText(), mode));
             });
 
             decryptBtn.addActionListener(e -> {
@@ -208,7 +184,7 @@ public class MainWindow extends JFrame {
                 }
 
                 try {
-                    plainText.setText(textHandler.decrypt(cipherText.getText(), getCipher(mode)));
+                    plainText.setText(textHandler.decrypt(cipherText.getText(), mode));
                 } catch (IllegalArgumentException e1) {
                     JOptionPane.showMessageDialog(this, "Encrypted string is invalid.");
                 }
@@ -216,17 +192,6 @@ public class MainWindow extends JFrame {
 
             modesCBox.addActionListener(e -> {
                 mode = (Mode) modesCBox.getSelectedItem();
-                if (mode == Mode.ECB) {
-                    ivLbl.setVisible(false);
-                    ivFld.setVisible(false);
-                } else {
-                    //установка вектора инициализации
-                    iv = getIV();
-
-                    ivFld.setText(hexSrting(iv));
-                    ivLbl.setVisible(true);
-                    ivFld.setVisible(true);
-                }
             });
         }
     }
@@ -235,15 +200,18 @@ public class MainWindow extends JFrame {
         JLabel keyLbl;
         JPasswordField passFld;
         JButton encryptDecryptBtn;
+        JComboBox<Mode> modesCBox;
 
         private FilePanel() {
             keyLbl = new JLabel(" Key: ", SwingConstants.CENTER);
             passFld = new JPasswordField(20);
             encryptDecryptBtn = new JButton("Pending");
+            modesCBox = new JComboBox<>(Mode.values());
 
             add(keyLbl);
             add(passFld);
             add(encryptDecryptBtn);
+            add(modesCBox);
 
             encryptDecryptBtn.addActionListener(e -> {
                 String fileName = "/home/azamat/Desktop/test/";
@@ -261,10 +229,12 @@ public class MainWindow extends JFrame {
 
                 //ключи шифрования/расшифрования
                 setKey(passFld.getPassword());
-                iv = getIV();
+
+                mode = (Mode) modesCBox.getSelectedItem();
+                //iv = getIV();
 
                 start = System.currentTimeMillis();
-                fileHandler.encrypt(fileName, mode, iv);
+                fileHandler.encrypt(fileName, mode);
                 System.out.println((System.currentTimeMillis() - start) / 1000);
 
                 start = System.currentTimeMillis();
@@ -280,7 +250,7 @@ public class MainWindow extends JFrame {
         if (key.length == 0) {
             JOptionPane.showMessageDialog(this, "You don't enter key.");
             // TODO: 8/18/16 сделать свой класс исключений, при отсутствии ключа
-            throw new IllegalArgumentException();
+            return;
         }
 
         //установка ключа
@@ -291,24 +261,6 @@ public class MainWindow extends JFrame {
         } catch (NoSuchAlgorithmException e1) {
             e1.printStackTrace();
         }
-    }
-
-    // TODO: 8/19/16 Перенести метод в класс BlockCipher, или в его конструктор.
-    //инициализирует класс в зависимости от режима
-    private BlockCipher getCipher(Mode mode) {
-        BlockCipher cipher = null;
-        switch (mode) {
-            case ECB:
-                cipher = new ECB();
-                break;
-            case CBC:
-                cipher = new CBC();
-        }
-        return cipher;
-    }
-
-    private byte[] getIV() {
-        return new SecureRandom().generateSeed(AESConst.BLOCK_SIZE);
     }
 
     private String hexSrting(byte[] array) {
