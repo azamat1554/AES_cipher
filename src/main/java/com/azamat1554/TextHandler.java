@@ -31,7 +31,7 @@ class TextHandler {
 
         System.arraycopy(src, 0, bytesOfText, offset, src.length);
 
-        BlockCipher.getCipher(mode).update(bytesOfText, offset, src.length + offset, true, ModeOfOperating.ENCRYPT);
+        BlockCipher.getCipher(mode).update(bytesOfText, src.length + offset, true, ModeOfOperating.ENCRYPT);
 
         //байты кодируются символами системы счисления Base64
         return Base64.getEncoder().encodeToString(bytesOfText);
@@ -42,18 +42,13 @@ class TextHandler {
 
         bytesOfText = Base64.getDecoder().decode(text.getBytes(Charset.forName("utf-8")));
 
+        //если длина массива не кратна размеру блока, то это недействительная строка
         if (bytesOfText.length % AESConst.BLOCK_SIZE != 0) throw new IllegalArgumentException();
 
+        int end = BlockCipher.getCipher(mode).update(bytesOfText, bytesOfText.length, true, ModeOfOperating.DECRYPT);
+
         offset = mode == Mode.ECB ? 0 : AESConst.BLOCK_SIZE;
-
-        int end = BlockCipher.getCipher(mode).update(bytesOfText, offset, bytesOfText.length, true, ModeOfOperating.DECRYPT);
-
         return new String(bytesOfText, offset, end - offset, Charset.forName("utf-8"));
-    }
-
-    //возвращает индекс конца полезных данных, и копирует данные из src в д
-    private void copy(byte[] src, byte[] dest) {
-        System.arraycopy(src, 0, dest, offset, src.length);
     }
 
     //Возвращает количество байтов, необходимых для дополнения

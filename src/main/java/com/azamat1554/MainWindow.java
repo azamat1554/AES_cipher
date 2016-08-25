@@ -6,15 +6,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 /**
  * Класс реализующий пользовательский интерфейс
  */
-
-// TODO: 8/19/16 Смысл показывать пользователю IV, если он не может его изменить? Просто посмотреть?
-//Удалить всю логику связанную с IV.
 public class MainWindow extends JFrame {
     private final FileHandler fileHandler = new FileHandler();
     private final TextHandler textHandler = new TextHandler();
@@ -117,7 +113,7 @@ public class MainWindow extends JFrame {
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.gridx = 0;
-            gbc.gridy = 2;
+            gbc.gridy = 1;
             gbc.gridwidth = 3;
             gbc.gridheight = 3;
             add(new JScrollPane(plainText), gbc);
@@ -125,23 +121,23 @@ public class MainWindow extends JFrame {
             gbc.weightx = 0;
             gbc.weighty = 0;
             gbc.gridx = 3;
-            gbc.gridy = 2;
+            gbc.gridy = 1;
             gbc.gridwidth = 1;
             gbc.gridheight = 1;
             add(modesCBox, gbc);
 
             gbc.weighty = 1;
             gbc.gridx = 3;
-            gbc.gridy = 3;
+            gbc.gridy = 2;
             add(encryptBtn, gbc);
 
             gbc.gridx = 3;
-            gbc.gridy = 4;
+            gbc.gridy = 3;
             add(decryptBtn, gbc);
 
             gbc.weightx = 1;
             gbc.gridx = 4;
-            gbc.gridy = 2;
+            gbc.gridy = 1;
             gbc.gridwidth = 1;
             gbc.gridheight = 3;
             add(new JScrollPane(cipherText), gbc);
@@ -190,9 +186,7 @@ public class MainWindow extends JFrame {
                 }
             });
 
-            modesCBox.addActionListener(e -> {
-                mode = (Mode) modesCBox.getSelectedItem();
-            });
+            modesCBox.addActionListener(e -> mode = (Mode) modesCBox.getSelectedItem());
         }
     }
 
@@ -261,15 +255,6 @@ public class MainWindow extends JFrame {
         } catch (NoSuchAlgorithmException e1) {
             e1.printStackTrace();
         }
-    }
-
-    private String hexSrting(byte[] array) {
-        char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-        StringBuilder ivStr = new StringBuilder();
-        for (byte anArray : array) {
-            ivStr.append(hex[(anArray & 0xf0) >> 4]).append(hex[anArray & 0x0f]).append(' ');
-        }
-        return ivStr.toString();
     }
 
     private byte[] toByte(char[] input) {

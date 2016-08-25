@@ -18,10 +18,10 @@ public class ECB extends BlockCipher {
     private static ModeOfOperating mode;
 
     @Override
-    public int update(byte[] streamOfBytes, int offset, int endOfData, boolean last, ModeOfOperating mode) {
+    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOfOperating mode) {
         data = streamOfBytes;
         ECB.mode = mode;
-        lastByte = endOfData; // + offset;
+        lastByte = endOfData;
 
         new ForkJoinExecution(0, endOfData, last).invoke();
 
@@ -100,10 +100,10 @@ public class ECB extends BlockCipher {
                     int end = 0;
                     if (mode == ModeOfOperating.ENCRYPT) {
                         while (hasNextBlock())
-                            end = appendBlock(cbAES.encryptBlock(nextBlock()), 1);
+                            end = appendBlock(cbAES.encryptBlock(nextBlock()));
                     } else {
                         while (hasNextBlock())
-                            end = appendBlock(cbAES.decryptBlock(nextBlock()), 1);
+                            end = appendBlock(cbAES.decryptBlock(nextBlock()));
                     }
                     return end;
                 }

@@ -42,10 +42,10 @@ public class CipherChunkTest {
             int end = 0;
             if (mode == ModeOfOperating.ENCRYPT) {
                 while (hasNextBlock())
-                    end = appendBlock(cbAES.encryptBlock(nextBlock()), currentPosition - AESConst.BLOCK_SIZE);
+                    end = appendBlock(cbAES.encryptBlock(nextBlock()));
             } else {
                 while (hasNextBlock())
-                    end = appendBlock(cbAES.decryptBlock(nextBlock()), currentPosition - AESConst.BLOCK_SIZE);
+                    end = appendBlock(cbAES.decryptBlock(nextBlock()));
             }
             return end;
         }

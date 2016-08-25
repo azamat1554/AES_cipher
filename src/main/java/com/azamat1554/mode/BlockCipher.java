@@ -10,8 +10,6 @@ import java.security.SecureRandom;
  * всеми классами выполняющими различные режими
  * шифрования.
  */
-
-//// TODO: 8/19/16 сделать анонимный класс и перенести методы из MainWindow
 public abstract class BlockCipher {
     private static byte[] iv;
 
@@ -19,13 +17,12 @@ public abstract class BlockCipher {
      * Выполняет инициализацию объекта, замем запускает задачу на рекурсивное выполнение.
      *
      * @param streamOfBytes Массив хранящий данные, которые нужно преобразовать
-     * @param offset        Индекс первого байта
      * @param endOfData     Индекс конца данных
      * @param last          Указывает, последний это кусок файла или нет
      * @param mode          Хранит текущий режим работы
      * @return Индекс на конец полезных данных после преобразований
      */
-    public abstract int update(byte[] streamOfBytes, int offset, int endOfData, boolean last, ModeOfOperating mode);
+    public abstract int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOfOperating mode);
 
     //инициализирует класс в зависимости от режима
     public static BlockCipher getCipher(Mode mode) {
@@ -57,11 +54,12 @@ public abstract class BlockCipher {
         return iv;
     }
 
-    protected byte[] getFirstBlock(byte[] data) {
-        byte[] block = new byte[AESConst.BLOCK_SIZE];
-        for (int i = 0; i < AESConst.BLOCK_SIZE; i++)
-            block[i] = data[i];
-
-        return block;
+    public static String hexSrting(byte[] array) {
+        char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+        StringBuilder ivStr = new StringBuilder();
+        for (byte anArray : array) {
+            ivStr.append(hex[(anArray & 0xf0) >> 4]).append(hex[anArray & 0x0f]).append(' ');
+        }
+        return ivStr.toString();
     }
 }

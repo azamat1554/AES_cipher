@@ -92,8 +92,8 @@ public abstract class CipherChunk {
         return block;
     }
 
-    protected int appendBlock(byte[] block, int numberOfBlocksBack) {
-        int position = currentPosition - numberOfBlocksBack * AESConst.BLOCK_SIZE;
+    protected int appendBlock(byte[] block) {
+        int position = currentPosition - AESConst.BLOCK_SIZE;
 
         //при дешифровке, если это последний кусок файла и последний блок данных этого куска
         //тогда проверить, на дополнение
@@ -121,19 +121,8 @@ public abstract class CipherChunk {
         return false;
     }
 
-    //возвращае индекс, на указанное кол-во блоков назад от текущего положения
-    protected int getBackwardPosition(int nubmerOfBlocks) {
-        return currentPosition - nubmerOfBlocks * AESConst.BLOCK_SIZE;
-    }
-
     public byte[] getFirstBlock() {
-        int temp = currentPosition;
-        currentPosition = 0;
-        byte[] block = null;
-
-        if (hasNextBlock()) block = nextBlock();
-
-        currentPosition = temp;
-        return block;
+        if (currentPosition != 0) return null;
+        return nextBlock();
     }
 }

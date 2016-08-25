@@ -48,7 +48,7 @@ public class FileHandler {
                 //считать из файла указанное кол-во байт или сколько осталось, и вернуть прочитанное количество байт.
                 numberOfBytes = fin.read(bytesOfFile, offset, SIZE);
 
-                int lastByte = cipher.update(bytesOfFile, offset, numberOfBytes + offset, lastChunk, ModeOfOperating.ENCRYPT);
+                int lastByte = cipher.update(bytesOfFile, numberOfBytes + offset, lastChunk, ModeOfOperating.ENCRYPT);
                 offset = 0;
 
                 //записывает зашифрованные данные в новый файл
@@ -80,7 +80,7 @@ public class FileHandler {
                 //считать из файла указанное кол-во байт или сколько осталось, и вернуть прочитанное количество байт.
                 numberOfBytes = fin.read(bytesOfFile, 0, SIZE);
 
-                int lastByte = cipher.update(bytesOfFile, offset, numberOfBytes, lastChunk, ModeOfOperating.DECRYPT);
+                int lastByte = cipher.update(bytesOfFile, numberOfBytes, lastChunk, ModeOfOperating.DECRYPT);
 
                 //записывает зашифрованные данные в новый файл
                 fout.write(bytesOfFile, offset, lastByte - offset);
