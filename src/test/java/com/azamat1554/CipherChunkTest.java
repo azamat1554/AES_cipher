@@ -40,12 +40,12 @@ public class CipherChunkTest {
         @Override
         public int makeTransform() {
             int end = 0;
-            if (mode == ModeOfOperating.ENCRYPT) {
+            if (mode == ModeOf.ENCRYPTION) {
                 while (hasNextBlock())
-                    end = appendBlock(cbAES.encryptBlock(nextBlock()));
+                    end = writeTransformedBlock(cbAES.encryptBlock(nextBlock()));
             } else {
                 while (hasNextBlock())
-                    end = appendBlock(cbAES.decryptBlock(nextBlock()));
+                    end = writeTransformedBlock(cbAES.decryptBlock(nextBlock()));
             }
             return end;
         }
@@ -58,7 +58,7 @@ public class CipherChunkTest {
 
     @Test
     public void testEncrypt() throws Exception {
-        cAES.init(bytesOfMsg, 0, bytesOfMsg.length - 16, true, ModeOfOperating.ENCRYPT);
+        cAES.init(bytesOfMsg, 0, bytesOfMsg.length - 16, true, ModeOf.ENCRYPTION);
 
         cAES.makeTransform();
 
@@ -68,7 +68,7 @@ public class CipherChunkTest {
 
     @Test
     public void testDecrypt() throws Exception {
-        cAES.init(cipherBytes, 0, cipherBytes.length, true, ModeOfOperating.DECRYPT);
+        cAES.init(cipherBytes, 0, cipherBytes.length, true, ModeOf.DECRYPTION);
 
         int lastByte = cAES.makeTransform();
 

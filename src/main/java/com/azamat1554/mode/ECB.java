@@ -1,8 +1,7 @@
 package com.azamat1554.mode;
 
-import com.azamat1554.AESConst;
 import com.azamat1554.CipherChunk;
-import com.azamat1554.ModeOfOperating;
+import com.azamat1554.ModeOf;
 
 import java.util.concurrent.RecursiveAction;
 
@@ -15,10 +14,10 @@ public class ECB extends BlockCipher {
 
     private static int lastByte;
 
-    private static ModeOfOperating mode;
+    private static ModeOf mode;
 
     @Override
-    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOfOperating mode) {
+    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) {
         data = streamOfBytes;
         ECB.mode = mode;
         lastByte = endOfData;
@@ -98,12 +97,12 @@ public class ECB extends BlockCipher {
                 @Override
                 public int makeTransform() {
                     int end = 0;
-                    if (mode == ModeOfOperating.ENCRYPT) {
+                    if (mode == ModeOf.ENCRYPTION) {
                         while (hasNextBlock())
-                            end = appendBlock(cbAES.encryptBlock(nextBlock()));
+                            end = writeTransformedBlock(cbAES.encryptBlock(nextBlock()));
                     } else {
                         while (hasNextBlock())
-                            end = appendBlock(cbAES.decryptBlock(nextBlock()));
+                            end = writeTransformedBlock(cbAES.decryptBlock(nextBlock()));
                     }
                     return end;
                 }

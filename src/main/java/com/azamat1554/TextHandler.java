@@ -3,7 +3,6 @@ package com.azamat1554;
 import com.azamat1554.mode.BlockCipher;
 import com.azamat1554.mode.Mode;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Base64;
 
@@ -11,10 +10,11 @@ import java.util.Base64;
  * Сразу создать массив нужного размера
  */
 class TextHandler {
+    // TODO: 8/25/16 Добавить ограничение на размер данных
     private final int SIZE = 16_384;
 
     //хранит байты файла
-    private byte[] bytesOfText; // = new byte[SIZE];
+    private byte[] bytesOfText;
 
     private int offset;
 
@@ -31,7 +31,7 @@ class TextHandler {
 
         System.arraycopy(src, 0, bytesOfText, offset, src.length);
 
-        BlockCipher.getCipher(mode).update(bytesOfText, src.length + offset, true, ModeOfOperating.ENCRYPT);
+        BlockCipher.getCipher(mode).update(bytesOfText, src.length + offset, true, ModeOf.ENCRYPTION);
 
         //байты кодируются символами системы счисления Base64
         return Base64.getEncoder().encodeToString(bytesOfText);
@@ -45,7 +45,7 @@ class TextHandler {
         //если длина массива не кратна размеру блока, то это недействительная строка
         if (bytesOfText.length % AESConst.BLOCK_SIZE != 0) throw new IllegalArgumentException();
 
-        int end = BlockCipher.getCipher(mode).update(bytesOfText, bytesOfText.length, true, ModeOfOperating.DECRYPT);
+        int end = BlockCipher.getCipher(mode).update(bytesOfText, bytesOfText.length, true, ModeOf.DECRYPTION);
 
         offset = mode == Mode.ECB ? 0 : AESConst.BLOCK_SIZE;
         return new String(bytesOfText, offset, end - offset, Charset.forName("utf-8"));

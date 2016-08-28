@@ -1,7 +1,7 @@
 package com.azamat1554.mode;
 
 import com.azamat1554.AESConst;
-import com.azamat1554.ModeOfOperating;
+import com.azamat1554.ModeOf;
 
 import java.security.SecureRandom;
 
@@ -22,7 +22,7 @@ public abstract class BlockCipher {
      * @param mode          Хранит текущий режим работы
      * @return Индекс на конец полезных данных после преобразований
      */
-    public abstract int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOfOperating mode);
+    public abstract int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode);
 
     //инициализирует класс в зависимости от режима
     public static BlockCipher getCipher(Mode mode) {

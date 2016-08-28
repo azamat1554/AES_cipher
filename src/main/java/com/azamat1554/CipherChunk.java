@@ -12,7 +12,7 @@ public abstract class CipherChunk {
     protected static byte[] data;
 
     //хранит текущий режим работы
-    protected static ModeOfOperating mode;
+    protected static ModeOf mode;
 
     //переменная класса для шифрования и расшифровки блоков
     protected CipherBlockAES cbAES;
@@ -42,7 +42,7 @@ public abstract class CipherChunk {
      * @param lastChunk Указывает, последний это кусок файла или нет
      * @param mode      Хранит текущий режим работы
      */
-    public void init(byte[] data, int from, int to, boolean lastChunk, ModeOfOperating mode) {
+    public void init(byte[] data, int from, int to, boolean lastChunk, ModeOf mode) {
         CipherChunk.data = data;
         CipherChunk.mode = mode;
 
@@ -51,7 +51,7 @@ public abstract class CipherChunk {
         this.lastChunk = lastChunk;
 
         //если режим шифрование и это последний кусок файла, тогда посчитать размер с дополнением, иначе не менять размер
-        endOfChunk = (mode == ModeOfOperating.ENCRYPT) & lastChunk ? getSizeWithPadding() : to;
+        endOfChunk = (mode == ModeOf.ENCRYPTION) & lastChunk ? getSizeWithPadding() : to;
     }
 
     //Возвращает индекс конца полезных данных в массиве после выполнения дополнения
@@ -92,12 +92,13 @@ public abstract class CipherChunk {
         return block;
     }
 
-    protected int appendBlock(byte[] block) {
+    //Возвращает индекс последнего обработанного байта
+    protected int writeTransformedBlock(byte[] block) {
         int position = currentPosition - AESConst.BLOCK_SIZE;
 
         //при дешифровке, если это последний кусок файла и последний блок данных этого куска
         //тогда проверить, на дополнение
-        if ((mode == ModeOfOperating.DECRYPT) && lastChunk && !hasNextBlock()) {
+        if ((mode == ModeOf.DECRYPTION) && lastChunk && !hasNextBlock()) {
             for (int i = 0; i < AESConst.BLOCK_SIZE; i++) {
                 if (isPadding(block, i)) break;
                 data[position++] = block[i];

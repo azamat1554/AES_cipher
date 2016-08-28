@@ -2,7 +2,7 @@ package com.azamat1554.mode;
 
 import com.azamat1554.AESConst;
 import com.azamat1554.CipherChunk;
-import com.azamat1554.ModeOfOperating;
+import com.azamat1554.ModeOf;
 
 /**
  * Class implements encryption of CBC mode.
@@ -16,15 +16,15 @@ public class CBC extends BlockCipher {
         @Override
         public int makeTransform() {
             int end = 0;
-            if (mode == ModeOfOperating.ENCRYPT) {
+            if (mode == ModeOf.ENCRYPTION) {
                 while (hasNextBlock()) {
                     feedback = cbAES.encryptBlock(doXOR(nextBlock(), feedback));
-                    end = appendBlock(feedback);
+                    end = writeTransformedBlock(feedback);
                 }
             } else {
                 while (hasNextBlock()) {
                     byte[] tempArray = nextBlock();
-                    end = appendBlock(doXOR(cbAES.decryptBlock(tempArray), feedback));
+                    end = writeTransformedBlock(doXOR(cbAES.decryptBlock(tempArray), feedback));
                     feedback = tempArray;
                 }
             }
@@ -33,12 +33,12 @@ public class CBC extends BlockCipher {
     };
 
     @Override
-    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOfOperating mode) {
+    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) {
         cipher.init(streamOfBytes, 0, endOfData, last, mode);
 
         if (feedback == null) {
             //генерировать вектор только один раз и только при шифровании
-            if (mode == ModeOfOperating.ENCRYPT) {
+            if (mode == ModeOf.ENCRYPTION) {
                 generateIV();
                 writeIV(streamOfBytes);
             }
