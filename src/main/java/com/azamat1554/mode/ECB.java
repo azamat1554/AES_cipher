@@ -3,6 +3,7 @@ package com.azamat1554.mode;
 import com.azamat1554.CipherChunk;
 import com.azamat1554.ModeOf;
 
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
 /**
@@ -17,12 +18,14 @@ public class ECB extends BlockCipher {
     private static ModeOf mode;
 
     @Override
-    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) {
+    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) throws InterruptedException {
         data = streamOfBytes;
         ECB.mode = mode;
         lastByte = endOfData;
 
-        new ForkJoinExecution(0, endOfData, last).invoke();
+        new ForkJoinPool().invoke(new ForkJoinExecution(0, endOfData, last));
+
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
 
         return lastByte;
     }
@@ -50,15 +53,24 @@ public class ECB extends BlockCipher {
         @Override
         protected void compute() {
             if ((to - from) <= THRESHOLD) {
-
                 /*класс осуществляющий разбиение на блоки для шифрования/расшифрования,
           а затем объединение блоков обратно*/
                 CipherChunk cipher = getCipherChunk();
                 cipher.init(data, from, to, lastChunk, mode);
 
-                int index = cipher.makeTransform();
+                int index = 0;
+                try {
+                    index = cipher.makeTransform();
+                } catch (InterruptedException e) {
+                    System.out.println("ECB::compute");
+                    e.printStackTrace();
 
-                //если последний блок будет обработан не в последнюю очередь
+                    //прекращает выполнение всех задач немедленно
+                    getPool().shutdownNow();
+                }
+                //проверка нужна, потому что последний кусок,
+                //может быть обработан не в последнюю очередь
+                //запомнить индекс на последний байт в массиве
                 if (lastChunk) lastByte = index;
             } else {
                 int bound;
@@ -95,15 +107,15 @@ public class ECB extends BlockCipher {
         private CipherChunk getCipherChunk() {
             return new CipherChunk() {
                 @Override
-                public int makeTransform() {
+                public int makeTransform() throws InterruptedException {
                     int end = 0;
-                    if (mode == ModeOf.ENCRYPTION) {
+                    if (mode == ModeOf.ENCRYPTION)
                         while (hasNextBlock())
                             end = writeTransformedBlock(cbAES.encryptBlock(nextBlock()));
-                    } else {
+                    else
                         while (hasNextBlock())
                             end = writeTransformedBlock(cbAES.decryptBlock(nextBlock()));
-                    }
+
                     return end;
                 }
             };

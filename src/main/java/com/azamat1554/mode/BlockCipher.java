@@ -1,6 +1,7 @@
 package com.azamat1554.mode;
 
 import com.azamat1554.AESConst;
+import com.azamat1554.CipherChunk;
 import com.azamat1554.ModeOf;
 
 import java.security.SecureRandom;
@@ -11,6 +12,8 @@ import java.security.SecureRandom;
  * шифрования.
  */
 public abstract class BlockCipher {
+    public static volatile boolean cipherStop = false;
+
     private static byte[] iv;
 
     /**
@@ -22,7 +25,8 @@ public abstract class BlockCipher {
      * @param mode          Хранит текущий режим работы
      * @return Индекс на конец полезных данных после преобразований
      */
-    public abstract int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode);
+    public abstract int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode)
+            throws InterruptedException;
 
     //инициализирует класс в зависимости от режима
     public static BlockCipher getCipher(Mode mode) {
@@ -52,6 +56,16 @@ public abstract class BlockCipher {
             data[i] = iv[i];
 
         return iv;
+    }
+
+    public static long getProgress() {
+        return CipherChunk.completedBlocks.get() * AESConst.BLOCK_SIZE;
+    }
+
+    //сбрасывает статические переменные
+    public static void reset() {
+        cipherStop = false;
+        CipherChunk.completedBlocks.set(0);
     }
 
     public static String hexSrting(byte[] array) {

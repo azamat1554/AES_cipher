@@ -1,5 +1,9 @@
 package com.azamat1554;
 
+import com.azamat1554.mode.BlockCipher;
+
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Этот класс принимает входной поток, делит его на блоки по 16 байт (если последний блок меньше 16 байт выполняется дополнение),
  * и отправляет на шифрование/расшифрование классу CipherBlockAES, который обрабатывает блок и возвращает результат.
@@ -28,6 +32,9 @@ public abstract class CipherChunk {
 
     //указывает, последний это кусок файла или нет
     private boolean lastChunk;
+
+    //кол-во записанных блоков
+    public static AtomicLong completedBlocks = new AtomicLong();
 
     public CipherChunk() {
         cbAES = new CipherBlockAES();
@@ -67,7 +74,7 @@ public abstract class CipherChunk {
      *
      * @return Индекс на конец полезных данных после преобразований
      */
-    public abstract int makeTransform();
+    public abstract int makeTransform() throws InterruptedException;
 
     //проверяет есть ли еще байты в потоке
     protected boolean hasNextBlock() {
@@ -93,7 +100,7 @@ public abstract class CipherChunk {
     }
 
     //Возвращает индекс последнего обработанного байта
-    protected int writeTransformedBlock(byte[] block) {
+    protected int writeTransformedBlock(byte[] block) throws InterruptedException {
         int position = currentPosition - AESConst.BLOCK_SIZE;
 
         //при дешифровке, если это последний кусок файла и последний блок данных этого куска
@@ -109,6 +116,9 @@ public abstract class CipherChunk {
             }
         }
 
+        checkInterruption();
+
+        completedBlocks.incrementAndGet();
         return position;
     }
 
@@ -120,6 +130,15 @@ public abstract class CipherChunk {
             return true;
         }
         return false;
+    }
+
+    private void checkInterruption() throws InterruptedException {
+        //        if (Thread.currentThread().isInterrupted()) {
+        if (BlockCipher.cipherStop) {
+            System.out.println("CipherChunk::checkInterruption");
+
+            throw new InterruptedException();
+        }
     }
 
     public byte[] getFirstBlock() {

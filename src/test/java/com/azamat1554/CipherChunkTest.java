@@ -38,7 +38,7 @@ public class CipherChunkTest {
     //instance of class is implemented AES encryption in ECB mode
     private CipherChunk cAES = new CipherChunk() {
         @Override
-        public int makeTransform() {
+        public int makeTransform() throws InterruptedException{
             int end = 0;
             if (mode == ModeOf.ENCRYPTION) {
                 while (hasNextBlock())

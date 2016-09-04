@@ -14,26 +14,27 @@ public class CBC extends BlockCipher {
     private CipherChunk cipher = new CipherChunk() {
 
         @Override
-        public int makeTransform() {
+        public int makeTransform() throws InterruptedException {
             int end = 0;
-            if (mode == ModeOf.ENCRYPTION) {
+            if (mode == ModeOf.ENCRYPTION)
                 while (hasNextBlock()) {
                     feedback = cbAES.encryptBlock(doXOR(nextBlock(), feedback));
                     end = writeTransformedBlock(feedback);
+
                 }
-            } else {
+            else
                 while (hasNextBlock()) {
                     byte[] tempArray = nextBlock();
                     end = writeTransformedBlock(doXOR(cbAES.decryptBlock(tempArray), feedback));
                     feedback = tempArray;
                 }
-            }
+
             return end;
         }
     };
 
     @Override
-    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) {
+    public int update(byte[] streamOfBytes, int endOfData, boolean last, ModeOf mode) throws InterruptedException {
         cipher.init(streamOfBytes, 0, endOfData, last, mode);
 
         if (feedback == null) {
