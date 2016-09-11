@@ -1,5 +1,8 @@
 package com.azamat1554;
 
+import com.azamat1554.cipher.CipherBlockAES;
+import com.azamat1554.cipher.ModeOf;
+import com.azamat1554.cipher.modes.BlockCipher;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,21 +35,22 @@ public class CipherBlockAESTest {
     };
 
     //instance of class is implemented AES encryption
-    CipherBlockAES cbAES = new CipherBlockAES();
+    private CipherBlockAES cbAES = new CipherBlockAES();
 
     @Before
     public void setKey() {
-        //cbAES.init(secretKey);
         CipherBlockAES.Key.setKey(secretKey);
     }
 
     @Test
     public void testEncryptBlock() throws Exception {
+        BlockCipher.setMode(ModeOf.ENCRYPTION);
         assertArrayEquals(cipherBytes, cbAES.encryptBlock(bytesOfMsg));
     }
 
     @Test
     public void testDecryptBlock() throws Exception {
+        BlockCipher.setMode(ModeOf.DECRYPTION);
         assertArrayEquals(bytesOfMsg, cbAES.decryptBlock(cipherBytes));
     }
 }

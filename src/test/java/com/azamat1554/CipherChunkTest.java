@@ -1,5 +1,9 @@
 package com.azamat1554;
 
+import com.azamat1554.cipher.CipherBlockAES;
+import com.azamat1554.cipher.CipherChunk;
+import com.azamat1554.cipher.ModeOf;
+import com.azamat1554.cipher.modes.BlockCipher;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,9 +42,9 @@ public class CipherChunkTest {
     //instance of class is implemented AES encryption in ECB mode
     private CipherChunk cAES = new CipherChunk() {
         @Override
-        public int makeTransform() throws InterruptedException{
+        public int makeTransform() throws InterruptedException {
             int end = 0;
-            if (mode == ModeOf.ENCRYPTION) {
+            if (BlockCipher.getMode() == ModeOf.ENCRYPTION) {
                 while (hasNextBlock())
                     end = writeTransformedBlock(cbAES.encryptBlock(nextBlock()));
             } else {
@@ -58,7 +62,8 @@ public class CipherChunkTest {
 
     @Test
     public void testEncrypt() throws Exception {
-        cAES.init(bytesOfMsg, 0, bytesOfMsg.length - 16, true, ModeOf.ENCRYPTION);
+        BlockCipher.setMode(ModeOf.ENCRYPTION);
+        cAES.init(bytesOfMsg, 0, bytesOfMsg.length - 16, true);
 
         cAES.makeTransform();
 
@@ -68,7 +73,8 @@ public class CipherChunkTest {
 
     @Test
     public void testDecrypt() throws Exception {
-        cAES.init(cipherBytes, 0, cipherBytes.length, true, ModeOf.DECRYPTION);
+        BlockCipher.setMode(ModeOf.DECRYPTION);
+        cAES.init(cipherBytes, 0, cipherBytes.length, true);
 
         int lastByte = cAES.makeTransform();
 

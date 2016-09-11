@@ -6,7 +6,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * Класс реализующий пользовательский интерфейс
+ * Класс формы, с него начинается выполнение приложения
+ *
+ * @author Azamat Abidokov
  */
 public class MainWindow extends JFrame {
 
@@ -14,12 +16,11 @@ public class MainWindow extends JFrame {
         super("AES encryption");
 
         JTabbedPane jtp = new JTabbedPane();
-        jtp.addTab("Text", new TextPanel());
+
         FilePanel filePanel = new FilePanel(jtp);
         jtp.addTab("File", filePanel);
+        jtp.addTab("Text", new TextPanel());
         add(jtp);
-
-        //jtp.setEnabled(false);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -33,7 +34,6 @@ public class MainWindow extends JFrame {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setMinimumSize(new Dimension(400, 300));
         setSize(new Dimension(800, 400));
-        //pack();
         setLocationByPlatform(true);
         setVisible(true);
     }

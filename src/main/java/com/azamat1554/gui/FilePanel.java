@@ -1,8 +1,9 @@
 package com.azamat1554.gui;
 
-import com.azamat1554.FileHandler;
-import com.azamat1554.ModeOf;
-import com.azamat1554.mode.Mode;
+import com.azamat1554.handlers.FileHandler;
+import com.azamat1554.cipher.ModeOf;
+import com.azamat1554.cipher.modes.BlockCipher;
+import com.azamat1554.cipher.modes.CipherMode;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -10,16 +11,19 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static com.azamat1554.gui.Utilities.getConstraints;
+import static com.azamat1554.gui.Utilities.setConstraints;
 
-//подкласс панели для шифрования файлов
+/**
+ * Класс панели, которая формирует ГПИ для обработки файлов.
+ *
+ * @author Azamat Abidokov
+ */
 public class FilePanel extends JPanel implements ActionListener {
     private final FileHandler fileHandler = new FileHandler(this);
     private Thread cipherThread;
@@ -36,7 +40,7 @@ public class FilePanel extends JPanel implements ActionListener {
     private JButton addFileBtn;
     private JButton removeFileBtn;
     private JButton stopBtn;
-    private JComboBox<Mode> modesCBox;
+    private JComboBox<CipherMode> modesCBox;
     private JTable filesTbl;
     private JProgressBar progressBar;
 
@@ -51,15 +55,15 @@ public class FilePanel extends JPanel implements ActionListener {
             }
         };
         addFileBtn = new JButton("Add files");
-        removeFileBtn = new JButton(new ImageIcon("src/main/resources/images/trash.png"));
+        removeFileBtn = new JButton(new ImageIcon(ClassLoader.getSystemResource("images/trash.png")));
 
         keyLbl = new JLabel(" Key: ", SwingConstants.CENTER);
         fileNameLbl = new JLabel();
         passFld = new JPasswordField();
-        showHideBtn = new JButton(new ImageIcon("src/main/resources/images/eye_open.png"));
+        showHideBtn = new JButton(new ImageIcon(ClassLoader.getSystemResource("images/eye_open.png")));
         encryptBtn = new JButton("Encrypt");
         decryptBtn = new JButton("Decrypt");
-        modesCBox = new JComboBox<>(Mode.values());
+        modesCBox = new JComboBox<>(CipherMode.values());
         progressBar = new JProgressBar();
         stopBtn = new JButton("Stop");
 
@@ -93,34 +97,34 @@ public class FilePanel extends JPanel implements ActionListener {
 
         JPanel keyAndModePnl = new JPanel(new GridBagLayout());
         gbc.insets = new Insets(0, 2, 0, 2);
-        keyAndModePnl.add(keyLbl, getConstraints(gbc, 0, 0, 1, 1, 0, 0));
-        keyAndModePnl.add(showHideBtn, getConstraints(gbc, 1, 0, 1, 1, 0, 0));
-        keyAndModePnl.add(modesCBox, getConstraints(gbc, 3, 0, 1, 1, 0, 0));
-        keyAndModePnl.add(passFld, getConstraints(gbc, 2, 0, 1, 1, 1, 0));
+        keyAndModePnl.add(keyLbl, setConstraints(gbc, 0, 0, 1, 1, 0, 0));
+        keyAndModePnl.add(showHideBtn, setConstraints(gbc, 1, 0, 1, 1, 0, 0));
+        keyAndModePnl.add(modesCBox, setConstraints(gbc, 3, 0, 1, 1, 0, 0));
+        keyAndModePnl.add(passFld, setConstraints(gbc, 2, 0, 1, 1, 1, 0));
 
 
         JPanel controlPnl = new JPanel(new GridBagLayout());
         controlPnl.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         gbc.insets = new Insets(2, 2, 2, 2);
-        controlPnl.add(keyAndModePnl, getConstraints(gbc, 0, 0, 3, 1, 1, 0));
+        controlPnl.add(keyAndModePnl, setConstraints(gbc, 0, 0, 3, 1, 1, 0));
         gbc.ipady = 10;
-        controlPnl.add(encryptBtn, getConstraints(gbc, 0, 1, 1, 1, 1, 1));
-        controlPnl.add(decryptBtn, getConstraints(gbc, 1, 1, 1, 1, 1, 1));
+        controlPnl.add(encryptBtn, setConstraints(gbc, 0, 1, 1, 1, 1, 1));
+        controlPnl.add(decryptBtn, setConstraints(gbc, 1, 1, 1, 1, 1, 1));
         gbc.ipady = 0;
 
 
         JPanel mainPnl = new JPanel(new GridBagLayout());
-        mainPnl.add(new JScrollPane(filesTbl), getConstraints(gbc, 0, 0, 2, 1, 1, 1));
-        mainPnl.add(addFileBtn, getConstraints(gbc, 0, 1, 1, 1, 1, 0));
-        mainPnl.add(removeFileBtn, getConstraints(gbc, 1, 1, 1, 1, 0, 0));
-        mainPnl.add(controlPnl, getConstraints(gbc, 0, 2, 2, 1, 1, 0.1));
+        mainPnl.add(new JScrollPane(filesTbl), setConstraints(gbc, 0, 0, 2, 1, 1, 1));
+        mainPnl.add(addFileBtn, setConstraints(gbc, 0, 1, 1, 1, 1, 0));
+        mainPnl.add(removeFileBtn, setConstraints(gbc, 1, 1, 1, 1, 0, 0));
+        mainPnl.add(controlPnl, setConstraints(gbc, 0, 2, 2, 1, 1, 0.1));
 
 
         JPanel progressPnl = new JPanel(new GridBagLayout());
-        progressPnl.add(fileNameLbl, getConstraints(gbc, 0, 0, 2, 1, 0, 0));
-        progressPnl.add(progressBar, getConstraints(gbc, 0, 1, 1, 1, 1, 0));
-        progressPnl.add(stopBtn, getConstraints(gbc, 1, 1, 1, 1, 0, 0));
+        progressPnl.add(fileNameLbl, setConstraints(gbc, 0, 0, 2, 1, 0, 0));
+        progressPnl.add(progressBar, setConstraints(gbc, 0, 1, 1, 1, 1, 0));
+        progressPnl.add(stopBtn, setConstraints(gbc, 1, 1, 1, 1, 0, 0));
 
 
         setLayout(cardLayout);
@@ -128,8 +132,9 @@ public class FilePanel extends JPanel implements ActionListener {
         add(progressPnl, "Progress");
     }
 
-    private Mode mode = Mode.ECB;
-    List<File> files = new ArrayList<>();
+    private CipherMode cipherMode = CipherMode.ECB;
+    /* Список файлов */
+    private List<File> files = new ArrayList<>();
 
     private void eventHandlers() {
         addFileBtn.addActionListener(e -> {
@@ -183,26 +188,20 @@ public class FilePanel extends JPanel implements ActionListener {
         showHideBtn.addActionListener(Utilities.showHideAction(showHideBtn, passFld));
         encryptBtn.addActionListener(this);
         decryptBtn.addActionListener(this);
-        modesCBox.addActionListener(e -> mode = (Mode) modesCBox.getSelectedItem());
+        modesCBox.addActionListener(e -> cipherMode = (CipherMode) modesCBox.getSelectedItem());
 
         stopBtn.addActionListener(e -> {
             stopBtn.setEnabled(false);
             progressTmr.stop();
-
-            System.out.println("filepanel::cancel");
-//            cipherThread.interrupt();
             fileHandler.cancel();
         });
 
-        progressTmr = new Timer(1000, e -> {
-            int percent = fileHandler.getProgressInPercentage();
-            progressBar.setValue(percent);
-        });
+        progressTmr = new Timer(1000, e -> progressBar.setValue(fileHandler.getProgressInPercentage()));
     }
 
     private void addFiles(List<File> listOfFiles) {
         for (File f : listOfFiles)
-            //Если файл еще не был добавлен в коллекцию, тогда добавить и вывести на таблицу
+            //Если файл еще не был добавлен в список, тогда добавить и вывести на таблицу
             if (!f.isDirectory() && !files.contains(f)) {
                 files.add(f);
                 ((DefaultTableModel) filesTbl.getModel()).addRow(new Object[]{f.getAbsolutePath(), getFileSize(f)});
@@ -218,34 +217,30 @@ public class FilePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (!isSelected()) return;
 
-        try {
-            Utilities.setKey(passFld.getPassword());
-        } catch (IllegalArgumentException e1) {
-            System.out.println("FilePanel::actionPerformed");
-            e1.printStackTrace();
-
+        if (!Utilities.setKey(passFld.getPassword())) {
+            JOptionPane.showMessageDialog(this, "You don't enter key.");
             return;
         }
 
-        if (e.getSource() == encryptBtn) {
-            fileHandler.init(files, getIndexesOfRows(), mode, ModeOf.ENCRYPTION);
-        } else if (e.getSource() == decryptBtn) {
-            fileHandler.init(files, getIndexesOfRows(), mode, ModeOf.DECRYPTION);
+        if (e.getSource() == encryptBtn)
+            BlockCipher.setMode(ModeOf.ENCRYPTION);
+        else if (e.getSource() == decryptBtn)
+            BlockCipher.setMode(ModeOf.DECRYPTION);
+
+        if (fileHandler.init(files, getIndexesOfRows(), cipherMode)) {
+            //запустить поток обработки файлов.
+            cipherThread = new Thread(fileHandler, "CipherThread");
+            cipherThread.start();
+
+            //запустить таймер
+            progressTmr.start();
+
+            //поменять карту
+            turn(true);
         }
-        //нужно создавать новый поток, или блокировать его
-
-        //запустить новый поток
-        cipherThread = new Thread(fileHandler);
-        cipherThread.start();
-
-        //запустить таймер
-        progressTmr.start();
-
-        //поменять карту
-        turn(true);
     }
 
-    //возвращает true, если в коллекции только один файл или если
+    /* Возвращает true, если в списке только один файл, либо если выделена хотя бы одна строка. */
     private boolean isSelected() {
         if (!files.isEmpty()) {
             if (files.size() == 1 || filesTbl.getSelectedRowCount() != 0)
@@ -256,36 +251,41 @@ public class FilePanel extends JPanel implements ActionListener {
         return false;
     }
 
+    /* Возвращает индексы файлов, которые требуется преобразованны. */
     private int[] getIndexesOfRows() {
+        // Если в списке только один файл, тогда вернуть его индекс
         if (files.size() == 1)
             return new int[]{0};
 
+        // Индексы выделенных строк
         return filesTbl.getSelectedRows();
     }
 
+    /**
+     * Обновляет метку, которая отображает имя файла.
+     *
+     * @param text Строка, которая будет записана в метку.
+     */
     public void setFileNameLbl(String text) {
-        SwingUtilities.invokeLater(() -> {
-            fileNameLbl.setText(text);
-        });
+        SwingUtilities.invokeLater(() -> fileNameLbl.setText(text));
     }
 
-    //вызывается из потока шифрования файлов,
-    //чтобы отобразить внесенные изменения
+    /**
+     * Обновляет ГПИ после выполнения преобразования файлов.
+     *
+     * @param indexes Индексы файлов в списке, которые были преобразованы.
+     */
     public void apply(int[] indexes) {
         SwingUtilities.invokeLater(() -> {
             //обновить строки в таблице
-            System.out.println("FilePanel::apply");
-
-            for (int i : indexes) {
-                System.out.println("updateTable: " + files.get(i).getAbsolutePath());
+            for (int i : indexes)
                 filesTbl.getModel().setValueAt(files.get(i).getAbsolutePath(), i, 0);
-            }
 
             turn(false);
         });
     }
 
-    //устанавливает значения
+    /* Переворачивает карту */
     private void turn(boolean started) {
         cardLayout.next(this);
         stopBtn.setEnabled(started);
@@ -293,8 +293,13 @@ public class FilePanel extends JPanel implements ActionListener {
         progressBar.setValue(0);
     }
 
-    //если поток не завершен возвращает true, иначе false
+    /**
+     * Возвращает состояние потока выполняющего обработку файла.
+     *
+     * @return {@code true} есил поток не завершен, {@code false} иначе.
+     */
     public boolean running() {
-        return cipherThread.isAlive();
+        return cipherThread != null && cipherThread.isAlive();
+
     }
 }

@@ -1,4 +1,4 @@
-package com.azamat1554;
+package com.azamat1554.cipher;
 
 /**
  * Определяет режим работы методов (шифрование/расшифровка)

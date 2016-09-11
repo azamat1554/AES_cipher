@@ -1,6 +1,6 @@
 package com.azamat1554.gui;
 
-import com.azamat1554.CipherBlockAES;
+import com.azamat1554.cipher.CipherBlockAES;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,11 +10,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 /**
- * Класс содержащий служебные методы
+ * Класс содержащий служебные методы.
+ *
+ * @author Azamat Abidokov
  */
-public class Utilities {
-    static GridBagConstraints getConstraints(GridBagConstraints gbc, int gridx, int gridy, int gridwidth,
-                                              int gridheight, double weightx, double weighty) {
+class Utilities {
+    /* Устанавливает указанные ограничения*/
+    static GridBagConstraints setConstraints(GridBagConstraints gbc, int gridx, int gridy, int gridwidth,
+                                             int gridheight, double weightx, double weighty) {
         gbc.gridx = gridx;
         gbc.gridy = gridy;
         gbc.gridwidth = gridwidth;
@@ -24,23 +27,31 @@ public class Utilities {
         return gbc;
     }
 
-    static void setKey(char[] key) {
-        if (key.length == 0) {
-            JOptionPane.showMessageDialog(null, "You don't enter key.");
-
-            throw new IllegalArgumentException();
-        }
+    /**
+     * Устанавливает ключ шифрования.
+     *
+     * @param key Массив символов ключа.
+     * @return {@code true} если ключ был успешно установлен, {@code false} иначе.
+     */
+    static boolean setKey(char[] key) {
+        // Если ключ не задан, выйти.
+        if (key.length == 0) return false;
 
         //установка ключа
         try {
+            // Вычисляет хэш от ключа, который затем используется как ключ шифрования.
             CipherBlockAES.Key.setKey(MessageDigest.getInstance("MD5").digest(toByte(key)));
+
             //обнулить массив с ключем
             Arrays.fill(key, '\u0000');
         } catch (NoSuchAlgorithmException e1) {
             e1.printStackTrace();
+            return false;
         }
+        return true;
     }
 
+    // Переводит символы в байты
     private static byte[] toByte(char[] input) {
         byte[] output = new byte[input.length * 2];
         for (int i = 0; i < input.length; i++) {
@@ -50,13 +61,22 @@ public class Utilities {
         return output;
     }
 
-    private static Icon openEye = new ImageIcon("src/main/resources/images/eye_open.png");
-    private static Icon closeEye = new ImageIcon("src/main/resources/images/eye_close.png");
+    private static final Icon openEye = new ImageIcon(ClassLoader.getSystemResource("images/eye_open.png"));
+    private static final Icon closeEye = new ImageIcon(ClassLoader.getSystemResource("images/eye_close.png"));
 
+    /**
+     * Показывает и скрывает ключ шифрования.
+     *
+     * @param showHideBtn Кнопка, которая была нажата.
+     * @param passFld     Текстовое поле содержащее ключ
+     * @return Обработчик нажатия на кнопку.
+     */
     public static ActionListener showHideAction(JButton showHideBtn, JPasswordField passFld) {
         return e -> {
             if (passFld.getEchoChar() != 0) {
                 showHideBtn.setIcon(closeEye);
+
+                //делает символы видимыми
                 passFld.setEchoChar((char) 0);
             } else {
                 showHideBtn.setIcon(openEye);
